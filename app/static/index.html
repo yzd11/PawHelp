@@ -1,0 +1,1982 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffe66d">
+  <title>PawHelp 智能客服</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --black: #000000;
+      --white: #ffffff;
+      --red: #ff6b6b;
+      --aqua: #4ecdc4;
+      --yellow: #ffe66d;
+      --mint: #95e1d3;
+      --coral: #f38181;
+      --danger: #b00020;
+      font-family: "Cascadia Mono", Consolas, "Microsoft YaHei", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { height: 100%; }
+
+    body {
+      position: relative;
+      margin: 0;
+      color: var(--black);
+      background: var(--yellow);
+      overflow: hidden;
+      font-weight: 650;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      z-index: 0;
+      border: 4px solid var(--black);
+      pointer-events: none;
+    }
+
+    body::before {
+      top: 5vh;
+      left: 3vw;
+      width: 84px;
+      height: 84px;
+      background: var(--red);
+      transform: rotate(-2deg);
+    }
+
+    body::after {
+      right: 2vw;
+      bottom: 4vh;
+      width: 112px;
+      height: 54px;
+      background: var(--aqua);
+      transform: rotate(2deg);
+    }
+
+    button, textarea { font: inherit; }
+    button { color: var(--black); }
+
+    button:focus-visible,
+    textarea:focus-visible {
+      outline: 3px solid var(--black);
+      outline-offset: 3px;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      padding: clamp(12px, 2vw, 28px);
+      display: grid;
+      place-items: center;
+    }
+
+    .app-shell {
+      width: min(1180px, 100%);
+      height: min(820px, 100%);
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr);
+      overflow: hidden;
+      border: 4px solid var(--black);
+      background: var(--white);
+      box-shadow: 12px 12px 0 var(--black);
+    }
+
+    .conversation-list { min-height: 0; overflow-y: auto; position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; gap: 10px; padding: 4px 6px 12px 0; }
+    .session-button { flex-shrink: 0; text-align: left; padding: 10px; border: 3px solid var(--black); background: var(--white); cursor: pointer; overflow-wrap: anywhere; }
+    .session-button small { display: block; margin-top: 5px; font-size: 11px; }
+    .session-button[aria-current="true"] { background: var(--yellow); }
+    .sidebar .conversation-card { display: none; }
+    .sidebar {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding: 28px 22px 22px;
+      color: var(--black);
+      background: var(--aqua);
+      border-right: 4px solid var(--black);
+      overflow: hidden;
+    }
+
+    .sidebar::before,
+    .sidebar::after {
+      content: "";
+      position: absolute;
+      border: 4px solid var(--black);
+      pointer-events: none;
+    }
+
+    .sidebar::before {
+      top: 135px;
+      right: -22px;
+      width: 58px;
+      height: 58px;
+      background: var(--red);
+      transform: rotate(2deg);
+    }
+
+    .sidebar::after {
+      right: -38px;
+      bottom: 126px;
+      width: 104px;
+      height: 104px;
+      background: var(--yellow);
+      transform: rotate(-2deg);
+    }
+
+    .brand {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: fit-content;
+      padding: 8px 12px 8px 8px;
+      border: 4px solid var(--black);
+      background: var(--yellow);
+      box-shadow: 5px 5px 0 var(--black);
+      font-family: "Arial Black", Impact, "Microsoft YaHei", sans-serif;
+      font-size: 19px;
+      font-weight: 900;
+      letter-spacing: 0.01em;
+      text-transform: uppercase;
+      transform: rotate(-1deg);
+    }
+
+    .brand-mark, .agent-avatar {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border: 4px solid var(--black);
+      background: var(--red);
+      color: var(--black);
+      font-weight: 900;
+    }
+
+    .brand-mark { width: 42px; height: 42px; border-width: 3px; }
+
+    .brand-mark svg, .agent-avatar svg { width: 60%; height: 60%; }
+
+    .sidebar-label {
+      margin: 44px 10px 12px;
+      color: var(--black);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .conversation-card {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px;
+      border: 4px solid var(--black);
+      background: var(--white);
+      box-shadow: 6px 6px 0 var(--red);
+      transform: rotate(1deg);
+    }
+
+    .conversation-icon {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--black);
+      background: var(--yellow);
+    }
+
+    .conversation-icon svg { width: 22px; height: 22px; }
+
+    .conversation-copy { min-width: 0; }
+    .conversation-copy strong, .conversation-copy span { display: block; }
+    .conversation-copy strong { font-size: 14px; font-weight: 900; }
+    .conversation-copy span {
+      margin-top: 4px;
+      overflow: hidden;
+      color: var(--black);
+      font-size: 12px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sidebar-note {
+      position: relative;
+      z-index: 1;
+      flex: 0 0 auto;
+      margin-top: auto;
+      padding: 16px;
+      border: 4px solid var(--black);
+      background: var(--yellow);
+      box-shadow: 6px 6px 0 var(--black);
+      transform: rotate(-1deg);
+    }
+
+    .sidebar-note strong { display: block; font-size: 13px; font-weight: 900; }
+    .sidebar-note p {
+      margin: 7px 0 0;
+      color: var(--black);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .chat-panel {
+      min-width: 0;
+      min-height: 0;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      overflow: hidden;
+      background: var(--white);
+    }
+
+    .topbar {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      min-height: 82px;
+      padding: 17px 24px;
+      border-bottom: 4px solid var(--black);
+      background: var(--white);
+    }
+
+    .agent-avatar {
+      position: relative;
+      width: 48px;
+      height: 48px;
+      box-shadow: 5px 5px 0 var(--aqua);
+      transform: rotate(-2deg);
+    }
+
+    .agent-avatar::after {
+      content: "";
+      position: absolute;
+      right: -1px;
+      bottom: -1px;
+      width: 11px;
+      height: 11px;
+      border: 2px solid var(--black);
+      background: var(--mint);
+    }
+
+    .agent-meta { min-width: 0; }
+    .agent-meta strong {
+      display: block;
+      font-family: "Arial Black", Impact, "Microsoft YaHei", sans-serif;
+      font-size: 16px;
+      font-weight: 900;
+    }
+    .agent-meta span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+      color: var(--black);
+      font-size: 12px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border: 1px solid var(--black);
+      background: var(--mint);
+    }
+
+    .topbar-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .page-nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px;
+      border: 3px solid var(--black);
+      background: var(--white);
+      box-shadow: 4px 4px 0 var(--black);
+    }
+
+    .page-nav a {
+      padding: 6px 9px;
+      border: 2px solid transparent;
+      color: var(--black);
+      font-size: 11px;
+      font-weight: 900;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .page-nav a:hover { background: var(--mint); border-color: var(--black); }
+    .page-nav a[aria-current="page"] { background: var(--yellow); border-color: var(--black); }
+
+    .new-chat {
+      margin-left: 0;
+      padding: 9px 13px;
+      border: 4px solid var(--black);
+      background: var(--yellow);
+      box-shadow: 5px 5px 0 var(--red);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 900;
+      transform: rotate(1deg);
+      transition: transform 300ms ease, box-shadow 300ms ease, background 300ms ease;
+    }
+
+    .new-chat:hover {
+      background: var(--mint);
+      box-shadow: none;
+      transform: translate(5px, 5px) rotate(-1deg) scale(1.03);
+    }
+
+    .new-chat:active {
+      box-shadow: none;
+      transform: translate(5px, 5px) rotate(0deg) scale(0.95);
+    }
+
+    .new-chat:focus-visible { box-shadow: 6px 6px 0 var(--aqua); }
+
+    .messages {
+      min-height: 0;
+      overflow-y: scroll;
+      padding: 30px clamp(20px, 5vw, 58px) 22px;
+      overscroll-behavior: contain;
+      scroll-behavior: smooth;
+      background: var(--white);
+      scrollbar-color: var(--red) var(--yellow);
+      scrollbar-gutter: stable;
+      scrollbar-width: auto;
+    }
+
+    .messages::-webkit-scrollbar { width: 14px; }
+    .messages::-webkit-scrollbar-track {
+      background: var(--yellow);
+    }
+    .messages::-webkit-scrollbar-thumb {
+      border: 3px solid var(--black);
+      background: var(--red);
+    }
+
+    .day-label {
+      width: fit-content;
+      margin: 0 auto 28px;
+      padding: 5px 10px;
+      border: 3px solid var(--black);
+      background: var(--yellow);
+      box-shadow: 3px 3px 0 var(--black);
+      color: var(--black);
+      font-size: 11px;
+      font-weight: 900;
+      text-align: center;
+      transform: rotate(-1deg);
+    }
+
+    .message-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      margin: 0 0 22px;
+      animation: appear 220ms ease both;
+    }
+
+    .message-row.user { justify-content: flex-end; }
+
+    .mini-avatar {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border: 3px solid var(--black);
+      background: var(--mint);
+      box-shadow: 3px 3px 0 var(--black);
+      color: var(--black);
+      font-size: 13px;
+      font-weight: 900;
+      transform: rotate(-1deg);
+    }
+
+    .message {
+      max-width: min(620px, 78%);
+      padding: 13px 16px;
+      border: 4px solid var(--black);
+      background: var(--white);
+      box-shadow: 6px 6px 0 var(--aqua);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font-size: 14px;
+      line-height: 1.65;
+      transform: rotate(-0.4deg);
+    }
+
+    .message-row.user .message {
+      background: var(--red);
+      color: var(--black);
+      box-shadow: 6px 6px 0 var(--yellow);
+      transform: rotate(0.5deg);
+    }
+
+    .message-row.error .message {
+      background: var(--yellow);
+      color: var(--danger);
+      box-shadow: 6px 6px 0 var(--coral);
+    }
+
+    .message-copy { min-width: 0; }
+
+    .message-copy.markdown-content { white-space: normal; font-weight: 500; }
+    .markdown-content > :first-child { margin-top: 0; }
+    .markdown-content > :last-child { margin-bottom: 0; }
+    .markdown-content p { margin: 0.65em 0; }
+    .markdown-content h1, .markdown-content h2, .markdown-content h3,
+    .markdown-content h4, .markdown-content h5, .markdown-content h6 { font-size: 1.12em; line-height: 1.5; margin: 1em 0 0.5em; }
+    .markdown-content strong { font-weight: 900; }
+    .markdown-content ul, .markdown-content ol { margin: 0.6em 0; padding-left: 1.6em; }
+    .markdown-content li { margin: 0.3em 0; }
+    .markdown-content li > p { margin: 0.3em 0; }
+    .markdown-content blockquote { margin: 0.8em 0; padding: 0.3em 0.8em; border-left: 4px solid var(--aqua); background: #f5f5ee; }
+    .markdown-content code { padding: 0.12em 0.3em; background: #f0f0e8; font-family: Consolas, monospace; font-size: 0.92em; }
+    .markdown-content pre { max-width: 100%; overflow-x: auto; padding: 12px; border: 2px solid var(--black); background: #f0f0e8; white-space: pre; }
+    .markdown-content pre code { padding: 0; background: transparent; overflow-wrap: normal; }
+    .markdown-content a { color: #006c67; text-decoration: underline; }
+    .markdown-content hr { border: 0; border-top: 2px solid var(--black); margin: 1em 0; }
+    .markdown-table { max-width: 100%; overflow-x: auto; margin: 0.8em 0; }
+    .markdown-content table { border-collapse: collapse; font-size: 0.95em; }
+    .markdown-content th, .markdown-content td { border: 2px solid var(--black); padding: 6px 10px; min-width: 75px; }
+    .markdown-content th { background: var(--mint); font-weight: 900; }
+
+    .citation-ref {
+      display: inline-grid;
+      place-items: center;
+      min-width: 24px;
+      height: 24px;
+      margin: 0 2px;
+      padding: 0 5px;
+      border: 3px solid var(--black);
+      background: var(--yellow);
+      box-shadow: 2px 2px 0 var(--black);
+      color: var(--black);
+      cursor: pointer;
+      font: inherit;
+      font-size: 11px;
+      font-weight: 900;
+      line-height: 1;
+      vertical-align: 1px;
+    }
+
+    .citation-ref:hover { background: var(--aqua); transform: translate(2px, 2px); box-shadow: none; }
+
+    .message-feedback {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+      margin-top: 10px;
+    }
+
+    .message-feedback:empty { display: none; }
+
+    .feedback-button {
+      width: 29px;
+      height: 27px;
+      padding: 0;
+      border: 3px solid var(--black);
+      background: var(--white);
+      box-shadow: 2px 2px 0 var(--black);
+      cursor: pointer;
+    }
+
+    .feedback-button.selected { background: var(--yellow); transform: translate(2px, 2px); box-shadow: none; }
+    .feedback-button:disabled { cursor: default; opacity: 0.75; }
+    .feedback-button.selected:disabled { opacity: 1; }
+    .feedback-label { font-size: 10px; font-weight: 900; }
+
+    .suggested-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .suggested-actions:empty { display: none; }
+    .suggested-action {
+      padding: 5px 9px; border: 3px solid var(--black); background: var(--yellow);
+      box-shadow: 3px 3px 0 var(--black); cursor: pointer; font-weight: 900;
+    }
+    .suggested-action:disabled { opacity: .65; cursor: default; }
+    .order-choice-list { display: grid; gap: 9px; margin-top: 12px; }
+    .order-choice {
+      padding: 10px 12px; text-align: left; border: 3px solid var(--black);
+      background: var(--yellow); box-shadow: 3px 3px 0 var(--black);
+      cursor: pointer; font-weight: 900;
+    }
+    .order-choice small { display: block; margin-top: 3px; font-weight: 600; }
+    .order-choice:disabled { opacity: .55; cursor: default; }
+
+    .source-modal, .ticket-modal, .refund-modal {
+      position: fixed;
+      z-index: 20;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgb(0 0 0 / 45%);
+    }
+
+    .source-modal[hidden], .ticket-modal[hidden], .refund-modal[hidden] { display: none; }
+
+    .source-card {
+      width: min(680px, 100%);
+      max-height: min(720px, 85vh);
+      overflow-y: auto;
+      padding: 22px;
+      border: 5px solid var(--black);
+      background: var(--white);
+      box-shadow: 10px 10px 0 var(--red);
+    }
+
+    .source-card-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .source-card h2 { margin: 0; font-size: 18px; }
+    .source-meta { margin: 14px 0; padding: 8px 10px; border: 3px solid var(--black); background: var(--mint); font-weight: 900; }
+    .source-question { margin: 0 0 10px; font-weight: 900; }
+    .source-answer { margin: 0; white-space: pre-wrap; line-height: 1.7; }
+    .source-close { padding: 6px 10px; border: 3px solid var(--black); background: var(--yellow); box-shadow: 3px 3px 0 var(--black); cursor: pointer; font-weight: 900; }
+
+    .ticket-card {
+      width: min(560px, 100%);
+      max-height: min(760px, 90vh);
+      overflow-y: auto;
+      padding: 24px;
+      border: 5px solid var(--black);
+      background: var(--white);
+      box-shadow: 10px 10px 0 var(--black);
+    }
+    .ticket-card h2 { margin: 0 0 5px; font-size: 22px; }
+    .ticket-card p { margin: 0 0 16px; }
+    .ticket-field { display: block; margin: 16px 0; font-weight: 900; }
+    .ticket-card select, .ticket-card textarea, .ticket-card input {
+      display: block;
+      width: 100%;
+      margin-top: 7px;
+      padding: 11px;
+      border: 3px solid var(--black);
+      background: var(--white);
+      color: var(--black);
+      font: inherit;
+      font-weight: 600;
+    }
+    .ticket-card textarea { min-height: 145px; resize: vertical; line-height: 1.5; }
+    .ticket-help { color: var(--muted); font-size: 12px; }
+    .ticket-error { color: #b01020; font-weight: 900; }
+    .ticket-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+    .ticket-actions button {
+      padding: 9px 14px;
+      border: 3px solid var(--black);
+      background: var(--white);
+      box-shadow: 3px 3px 0 var(--black);
+      cursor: pointer;
+      font: inherit;
+      font-weight: 900;
+    }
+    .ticket-actions button[type="submit"] { background: var(--coral); }
+    .ticket-actions button:disabled { opacity: .6; cursor: default; }
+
+    .tool-traces {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .tool-traces:not(.reported) { display: none; }
+
+    .tool-trace-summary {
+      flex-basis: 100%;
+      color: var(--black);
+      font-size: 11px;
+      font-weight: 900;
+      line-height: 1.4;
+    }
+
+    .tool-badge {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      padding: 4px 7px;
+      border: 3px solid var(--black);
+      background: var(--yellow);
+      box-shadow: 3px 3px 0 var(--black);
+      color: var(--black);
+      font-size: 10px;
+      font-weight: 900;
+      line-height: 1.25;
+      transform: rotate(-0.7deg);
+    }
+
+    .tool-badge.succeeded { background: var(--mint); }
+    .tool-badge.failed { background: var(--coral); }
+    .tool-badge[hidden] { display: none; }
+
+    .tool-trace-toggle {
+      border: 2px solid var(--black);
+      background: var(--yellow);
+      color: var(--black);
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 900;
+      padding: 4px 7px;
+    }
+    .tool-trace-toggle[hidden] { display: none; }
+
+    .streaming-caret {
+      display: inline-block;
+      width: 7px;
+      height: 15px;
+      margin-left: 3px;
+      background: var(--black);
+      vertical-align: -2px;
+      animation: blink 850ms steps(2, start) infinite;
+    }
+
+    .typing-dots { display: inline-flex; gap: 4px; padding: 4px 2px; }
+    .typing-dots i {
+      width: 6px;
+      height: 6px;
+      border: 1px solid var(--black);
+      background: var(--aqua);
+      animation: typing-pulse 900ms steps(2, end) infinite;
+    }
+    .typing-dots i:nth-child(2) { animation-delay: 130ms; }
+    .typing-dots i:nth-child(3) { animation-delay: 260ms; }
+
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 6px 0 24px 40px;
+    }
+
+    .suggestion {
+      padding: 8px 12px;
+      border: 4px solid var(--black);
+      background: var(--mint);
+      box-shadow: 4px 4px 0 var(--black);
+      color: var(--black);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 900;
+      transform: rotate(-1deg);
+      transition: transform 300ms ease, box-shadow 300ms ease, background 300ms ease;
+    }
+
+    .suggestion:nth-child(2) { background: var(--yellow); transform: rotate(1deg); }
+    .suggestion:nth-child(3) { background: var(--coral); transform: rotate(-0.5deg); }
+
+    .suggestion:hover {
+      background: var(--aqua);
+      box-shadow: none;
+      transform: translate(4px, 4px) rotate(1deg) scale(1.04);
+    }
+
+    .suggestion:active {
+      box-shadow: none;
+      transform: translate(4px, 4px) rotate(0deg) scale(0.95);
+    }
+
+    .suggestion:focus-visible { box-shadow: 6px 6px 0 var(--red); }
+
+    .composer-wrap {
+      position: relative;
+      z-index: 2;
+      padding: 14px clamp(18px, 4vw, 42px) 20px;
+      border-top: 4px solid var(--black);
+      background: var(--mint);
+    }
+
+    .composer {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: flex-end;
+      gap: 14px;
+      padding: 0;
+    }
+
+    textarea {
+      width: 100%;
+      max-height: 126px;
+      min-height: 50px;
+      padding: 11px 13px;
+      resize: none;
+      overflow-y: hidden;
+      border: 4px solid var(--black);
+      outline: none;
+      background: var(--white);
+      box-shadow: 6px 6px 0 var(--aqua);
+      color: var(--black);
+      line-height: 1.5;
+      transition: transform 300ms ease, box-shadow 300ms ease;
+    }
+
+    textarea::placeholder { color: #3c3c3c; opacity: 1; }
+
+    textarea:focus {
+      box-shadow: 6px 6px 0 var(--red);
+      transform: translateY(-2px);
+    }
+
+    .send-button {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 50px;
+      height: 50px;
+      border: 4px solid var(--black);
+      background: var(--red);
+      color: var(--black);
+      cursor: pointer;
+      box-shadow: 6px 6px 0 var(--black);
+      transform: rotate(-1deg);
+      transition: transform 300ms ease, box-shadow 300ms ease, background 300ms ease;
+    }
+
+    .send-button:hover:not(:disabled) {
+      background: var(--yellow);
+      box-shadow: none;
+      transform: translate(6px, 6px) rotate(1deg) scale(1.04);
+    }
+
+    .send-button:active:not(:disabled) {
+      box-shadow: none;
+      transform: translate(6px, 6px) rotate(0deg) scale(0.95);
+    }
+
+    .send-button:focus-visible { box-shadow: 6px 6px 0 var(--aqua); }
+    .send-button:disabled { cursor: not-allowed; background: var(--white); box-shadow: 3px 3px 0 var(--black); }
+    .send-button svg { width: 18px; height: 18px; }
+
+    .composer-hint {
+      margin: 8px 4px 0;
+      color: var(--black);
+      font-size: 10px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    @keyframes appear {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes blink { 50% { opacity: 0; } }
+    @keyframes typing-pulse {
+      0%, 100% { opacity: 0.35; }
+      50% { opacity: 1; }
+    }
+
+    @media (max-width: 760px) {
+      .page { padding: 0; }
+      .app-shell {
+        height: 100%;
+        border: 0;
+        box-shadow: none;
+        grid-template-columns: 1fr;
+        grid-template-rows: 100px minmax(0, 1fr);
+      }
+      .sidebar { display: flex; padding: 8px; border-right: 0; border-bottom: 3px solid var(--black); }
+      .sidebar .brand, .sidebar .conversation-card, .sidebar-note, .sidebar::before, .sidebar::after { display: none; }
+      .sidebar-label { margin: 0 0 3px; font-size: 11px; }
+      .conversation-list { flex-direction: row; overflow-x: auto; padding: 0 0 3px; }
+      .session-button { width: 180px; padding: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+      .topbar { min-height: 72px; padding: 12px 16px; }
+      .agent-avatar { width: 44px; height: 44px; }
+      .topbar { flex-wrap: wrap; }
+      .topbar-actions { width: 100%; justify-content: space-between; }
+      .page-nav a { padding: 5px 7px; font-size: 10px; }
+      .new-chat { padding: 8px 10px; }
+      .messages { padding: 24px 15px 18px; }
+      .message { max-width: 84%; }
+      .suggestions { margin-left: 40px; }
+      .composer-wrap { padding: 10px 12px 13px; }
+      .composer-hint { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="/static/navigation.css">
+  <script src="/static/navigation.js" defer></script>
+</head>
+<body>
+  <main class="page">
+    <section class="app-shell" aria-label="PawHelp 智能客服">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 9V5l4 3a8 8 0 0 1 6 0l4-3v4a7 7 0 1 1-14 0Z"/>
+              <path d="M9 14h.01M15 14h.01M10 17c1.2.7 2.8.7 4 0"/>
+            </svg>
+          </span>
+          PawHelp
+        </div>
+
+        <p class="sidebar-label">我的会话</p>
+        <div id="conversationList" class="conversation-list" aria-label="会话列表"></div>
+        <div class="conversation-card">
+          <span class="conversation-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" stroke-linejoin="miter">
+              <path d="M12 3v4M12 17v4M3 12h4M17 12h4"/>
+              <path d="m6 6 3 3M15 15l3 3M18 6l-3 3M9 15l-3 3"/>
+            </svg>
+          </span>
+          <div class="conversation-copy">
+            <strong>在线客服</strong>
+            <span id="conversationPreview">随时为你解答订单问题</span>
+          </div>
+        </div>
+
+        <div class="sidebar-note">
+          <strong>服务说明</strong>
+          <p>当前环境提供演示订单与模拟人工转接。请勿输入密码、身份证号等敏感信息。</p>
+        </div>
+      </aside>
+
+      <section class="chat-panel">
+        <header class="topbar">
+          <span class="agent-avatar" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 9V5l4 3a8 8 0 0 1 6 0l4-3v4a7 7 0 1 1-14 0Z"/>
+              <path d="M9 14h.01M15 14h.01M10 17c1.2.7 2.8.7 4 0"/>
+            </svg>
+          </span>
+          <div class="agent-meta">
+            <strong>PawHelp 客服助手</strong>
+            <span><i class="status-dot"></i><span id="agentStatus">在线</span></span>
+          </div>
+          <div class="topbar-actions">
+            <nav class="page-nav" aria-label="全局页面导航" data-app-navigation>
+              <a href="/admin">管理后台</a>
+            </nav>
+            <button class="new-chat" id="newChatButton" type="button">新建会话</button>
+          </div>
+        </header>
+
+        <div class="messages" id="messages" aria-live="polite" aria-label="聊天消息"></div>
+
+        <footer class="composer-wrap">
+          <p id="contextCompressionStatus" role="status" aria-live="polite" hidden style="margin:0 0 8px;font-size:13px;line-height:1.5">
+            正在压缩会话上下文… <span style="font-weight:normal">后台处理中，可继续聊天</span>
+          </p>
+          <form class="composer" id="chatForm">
+            <textarea id="messageInput" rows="1" maxlength="4000" placeholder="输入你的问题…" aria-label="输入消息"></textarea>
+            <button class="send-button" id="sendButton" type="submit" aria-label="发送消息" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
+              </svg>
+            </button>
+          </form>
+          <p class="composer-hint">按 Enter 发送，按住 Shift 再按 Enter 换行，请勿发送密码等敏感信息</p>
+        </footer>
+      </section>
+    </section>
+  </main>
+
+  <div class="source-modal" id="sourceModal" hidden role="dialog" aria-modal="true" aria-labelledby="sourceTitle">
+    <article class="source-card">
+      <div class="source-card-head">
+        <h2 id="sourceTitle">知识来源</h2>
+        <button class="source-close" id="sourceClose" type="button">关闭</button>
+      </div>
+      <div class="source-meta" id="sourceMeta"></div>
+      <p class="source-question" id="sourceQuestion"></p>
+      <p class="source-answer" id="sourceAnswer"></p>
+    </article>
+  </div>
+
+  <div class="ticket-modal" id="ticketModal" hidden role="dialog" aria-modal="true" aria-labelledby="ticketTitle">
+    <form class="ticket-card" id="ticketForm">
+      <h2 id="ticketTitle">创建工单</h2>
+      <p>请确认反馈类别并亲自填写问题；只有点击“提交工单”才会保存。</p>
+      <label class="ticket-field" for="ticketType">反馈类别 *</label>
+      <select id="ticketType" name="ticket_type" required>
+        <option value="" selected disabled>请选择反馈类别…</option>
+        <option value="售后">售后</option>
+        <option value="投诉">投诉</option>
+        <option value="咨询">咨询</option>
+      </select>
+      <label class="ticket-field" for="ticketDescription">反馈描述 *</label>
+      <textarea id="ticketDescription" name="description" maxlength="2000" required placeholder="请描述遇到的问题、相关订单号及希望如何处理；请勿填写密码。"></textarea>
+      <p class="ticket-help">数据库按 UTC 保存；提交成功后显示香港/北京时间（UTC+8）。</p>
+      <p class="ticket-error" id="ticketError" role="alert" hidden></p>
+      <div class="ticket-actions">
+        <button id="ticketCancel" type="button">取消</button>
+        <button id="ticketSubmit" type="submit">提交工单</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="refund-modal" id="refundModal" hidden role="dialog" aria-modal="true" aria-labelledby="refundTitle">
+    <form class="ticket-card" id="refundForm">
+      <h2 id="refundTitle">提交退款申请</h2>
+      <p>这里只登记申请，状态为待人工审核；不会自动退款。标注为演示的订单是测试数据。</p>
+      <label class="ticket-field" for="refundOrder">关联订单 *</label>
+      <input id="refundOrder" name="order_id" readonly required>
+      <label class="ticket-field" for="refundReason">退款原因 *</label>
+      <select id="refundReason" name="reason" required>
+        <option value="" selected disabled>请选择固定原因类目…</option>
+        <option value="七天无理由">七天无理由</option>
+        <option value="商品破损">商品破损</option>
+        <option value="质量问题">质量问题</option>
+        <option value="发错或漏发">发错或漏发</option>
+        <option value="其他">其他</option>
+      </select>
+      <label class="ticket-field" for="refundDescription">补充说明（选填）</label>
+      <textarea id="refundDescription" name="description" maxlength="1000" placeholder="可以补充问题经过；请勿填写密码。"></textarea>
+      <p class="ticket-error" id="refundError" role="alert" hidden></p>
+      <div class="ticket-actions">
+        <button id="refundCancel" type="button">取消</button>
+        <button id="refundSubmit" type="submit">提交退款申请</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="/static/vendor/marked-18.1.0.umd.js"></script>
+  <script src="/static/vendor/purify-3.4.16.min.js"></script>
+  <script src="/static/chat-markdown.js"></script>
+  <script src="/static/context-status.js"></script>
+  <script src="/static/storage-migration.js"></script>
+  <script>
+    (async function startChat() {
+    await window.PawHelpStorage.prepare();
+    const messages = document.querySelector("#messages");
+    const form = document.querySelector("#chatForm");
+    const input = document.querySelector("#messageInput");
+    const sendButton = document.querySelector("#sendButton");
+    const newChatButton = document.querySelector("#newChatButton");
+    const agentStatus = document.querySelector("#agentStatus");
+    const conversationPreview = document.querySelector("#conversationPreview");
+    const sourceModal = document.querySelector("#sourceModal");
+    const sourceClose = document.querySelector("#sourceClose");
+    const sourceMeta = document.querySelector("#sourceMeta");
+    const sourceQuestion = document.querySelector("#sourceQuestion");
+    const sourceAnswer = document.querySelector("#sourceAnswer");
+    const ticketModal = document.querySelector("#ticketModal");
+    const ticketForm = document.querySelector("#ticketForm");
+    const ticketType = document.querySelector("#ticketType");
+    const ticketDescription = document.querySelector("#ticketDescription");
+    const ticketError = document.querySelector("#ticketError");
+    const ticketCancel = document.querySelector("#ticketCancel");
+    const ticketSubmit = document.querySelector("#ticketSubmit");
+    const refundModal = document.querySelector("#refundModal");
+    const refundForm = document.querySelector("#refundForm");
+    const refundOrder = document.querySelector("#refundOrder");
+    const refundReason = document.querySelector("#refundReason");
+    const refundDescription = document.querySelector("#refundDescription");
+    const refundError = document.querySelector("#refundError");
+    const refundCancel = document.querySelector("#refundCancel");
+    const refundSubmit = document.querySelector("#refundSubmit");
+
+    const USER_ID_KEY = "pawhelp.userId";
+    const CONVERSATION_ID_KEY = "pawhelp.conversationId";
+    const FEEDBACK_KEY = "pawhelp.messageFeedback.server";
+    const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+    function readStoredUuid(key) {
+      const value = localStorage.getItem(key);
+      return value && UUID_PATTERN.test(value) ? value : null;
+    }
+
+    function readStoredConversationId() {
+      const value = localStorage.getItem(CONVERSATION_ID_KEY);
+      if (!value || !/^\d+$/.test(value)) return null;
+      const parsed = Number(value);
+      return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
+    }
+
+    const userId = readStoredUuid(USER_ID_KEY) || crypto.randomUUID();
+    let conversationId = readStoredConversationId();
+    let isStreaming = false;
+    let activeController = null;
+    let conversationEpoch = 0;
+    let pendingTicket = null;
+    let ticketSubmitting = false;
+    let pendingRefund = null;
+    let refundSubmitting = false;
+
+    localStorage.setItem(USER_ID_KEY, userId);
+
+    const contextStatus = window.PawHelpContextStatus.create({
+      element: document.querySelector("#contextCompressionStatus"), userId,
+      getContext: () => ({ id: conversationId, epoch: conversationEpoch }),
+    });
+    window.addEventListener("pagehide", (event) => { if (!event.persisted) contextStatus.stop(); });
+    window.addEventListener("pageshow", (event) => { if (event.persisted) contextStatus.refresh(); });
+
+    class PublicFacingError extends Error {}
+
+    function scrollToLatest() {
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function resizeInput() {
+      input.style.overflowY = "hidden";
+      input.style.height = "auto";
+      const nextHeight = Math.min(Math.max(input.scrollHeight, 50), 126);
+      input.style.height = `${nextHeight}px`;
+      input.style.overflowY = input.scrollHeight > 126 ? "auto" : "hidden";
+      sendButton.disabled = isStreaming || !input.value.trim();
+    }
+
+    function addDayLabel() {
+      const label = document.createElement("p");
+      label.className = "day-label";
+      label.textContent = "今天";
+      messages.appendChild(label);
+    }
+
+    function addMessage(role, content = "", state = "normal") {
+      const row = document.createElement("div");
+      row.className = `message-row ${role}${state === "error" ? " error" : ""}`;
+
+      if (role === "assistant") {
+        const avatar = document.createElement("span");
+        avatar.className = "mini-avatar";
+        avatar.setAttribute("aria-hidden", "true");
+        avatar.textContent = "喵";
+        row.appendChild(avatar);
+      }
+
+      const bubble = document.createElement("div");
+      bubble.className = "message";
+      const copy = document.createElement("div");
+      copy.className = "message-copy";
+      copy.textContent = content;
+      bubble.appendChild(copy);
+
+      const traces = document.createElement("div");
+      traces.className = "tool-traces";
+      bubble.appendChild(traces);
+
+      const feedback = document.createElement("div");
+      feedback.className = "message-feedback";
+      bubble.appendChild(feedback);
+
+      const actions = document.createElement("div");
+      actions.className = "suggested-actions";
+      bubble.appendChild(actions);
+
+      row.appendChild(bubble);
+      messages.appendChild(row);
+      scrollToLatest();
+      return { row, bubble, copy, traces, feedback, actions, badges: new Map() };
+    }
+
+    function readFeedback() {
+      try {
+        const value = JSON.parse(localStorage.getItem(FEEDBACK_KEY) || "{}");
+        return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+      } catch (_) {
+        return {};
+      }
+    }
+
+    function renderFeedback(assistant, messageId) {
+      if (!Number.isSafeInteger(messageId) || messageId < 1) return;
+      const stored = readFeedback();
+      const current = stored[String(messageId)];
+      assistant.feedback.replaceChildren();
+      for (const [value, label] of [["up", "👍"], ["down", "👎"]]) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `feedback-button${current === value ? " selected" : ""}`;
+        button.textContent = label;
+        button.setAttribute("aria-label", value === "up" ? "回答有帮助" : "回答没有帮助");
+        button.disabled = Boolean(current);
+        button.addEventListener("click", async () => {
+          const latest = readFeedback();
+          if (latest[String(messageId)]) return;
+          const cid = conversationId;
+          for (const item of assistant.feedback.querySelectorAll("button")) item.disabled = true;
+          try {
+            const response = await fetch(`/v1/conversations/${encodeURIComponent(cid)}/messages/${encodeURIComponent(messageId)}/feedback`, {
+              method: "POST", headers: { "Content-Type": "application/json", "X-Demo-User-Id": userId }, body: JSON.stringify({ vote: value }),
+            });
+            if (!response.ok) throw new Error("feedback failed");
+            const result = await response.json();
+            const updated = readFeedback();
+            updated[String(messageId)] = result.feedback;
+            localStorage.setItem(FEEDBACK_KEY, JSON.stringify(updated));
+            renderFeedback(assistant, messageId);
+          } catch (_) {
+            renderFeedback(assistant, messageId);
+            const error = document.createElement("span");
+            error.textContent = "反馈保存失败，请重试";
+            assistant.feedback.appendChild(error);
+          }
+        });
+        assistant.feedback.appendChild(button);
+      }
+      if (current) {
+        const label = document.createElement("span");
+        label.className = "feedback-label";
+        label.textContent = current === "down" ? "已记录未解决的问题，等待处理" : "反馈已保存";
+        assistant.feedback.appendChild(label);
+      }
+    }
+
+    async function openSource(source) {
+      sourceModal.hidden = false;
+      sourceMeta.textContent = `来源 [${source.number}] · 正在读取…`;
+      sourceQuestion.textContent = "";
+      sourceAnswer.textContent = "";
+      sourceClose.focus();
+      try {
+        const response = await fetch(`/v1/knowledge/chunks/${encodeURIComponent(source.chunk_id)}`);
+        if (!response.ok) throw new Error("source unavailable");
+        const chunk = await response.json();
+        sourceMeta.textContent = `${chunk.category} · ${chunk.section_path || "未标章节"}`;
+        sourceQuestion.textContent = chunk.questions || "";
+        sourceAnswer.textContent = chunk.answer || "";
+      } catch (_) {
+        sourceMeta.textContent = `来源 [${source.number}]`;
+        sourceAnswer.textContent = "来源暂时无法读取，请稍后重试。";
+      }
+    }
+
+    function renderFinalAnswer(assistant, text, sources, messageId) {
+      if (window.PawHelpMarkdown) window.PawHelpMarkdown.render(assistant.copy, text, sources, openSource);
+      else assistant.copy.textContent = String(text || "");
+      renderFeedback(assistant, messageId);
+    }
+
+    function openTicketForm(messageId, button) {
+      if (!Number.isSafeInteger(conversationId) || conversationId < 1) return;
+      pendingTicket = { conversationId, messageId, button };
+      ticketForm.reset();
+      ticketError.hidden = true;
+      ticketModal.hidden = false;
+      ticketType.focus();
+    }
+
+    function closeTicketForm() {
+      if (ticketSubmitting) return;
+      ticketModal.hidden = true;
+      ticketForm.reset();
+      ticketError.hidden = true;
+      const button = pendingTicket?.button;
+      pendingTicket = null;
+      if (button?.isConnected && !button.disabled) button.focus();
+    }
+
+    function formatTicketTime(utcValue) {
+      const date = new Date(utcValue);
+      if (Number.isNaN(date.getTime())) return "创建时间暂不可用";
+      const local = new Intl.DateTimeFormat("zh-CN", {
+        timeZone: "Asia/Hong_Kong", hourCycle: "h23",
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+      }).format(date);
+      return `${local}（香港/北京时间）`;
+    }
+
+    async function submitTicketForm(event) {
+      event.preventDefault();
+      if (!pendingTicket || ticketSubmitting) return;
+      const description = ticketDescription.value.trim();
+      if (!ticketType.value || !description) {
+        ticketError.textContent = "请选择反馈类别并填写问题描述。";
+        ticketError.hidden = false;
+        (ticketType.value ? ticketDescription : ticketType).focus();
+        return;
+      }
+      const action = pendingTicket;
+      ticketSubmitting = true;
+      ticketSubmit.disabled = true;
+      ticketCancel.disabled = true;
+      ticketError.hidden = true;
+      try {
+        const response = await fetch(`/v1/conversations/${encodeURIComponent(action.conversationId)}/tickets`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: userId, message_id: action.messageId,
+            ticket_type: ticketType.value, description,
+          }),
+        });
+        if (!response.ok) throw new Error("ticket creation failed");
+        const ticket = await response.json();
+        ticketSubmitting = false;
+        action.button.disabled = true;
+        closeTicketForm();
+        addMessage("assistant", `工单已创建：${ticket.ticket_no}（${ticket.status}）。创建时间：${formatTicketTime(ticket.created_at)}`);
+      } catch (_) {
+        ticketError.textContent = "工单暂时无法创建，请稍后重试；您填写的内容仍保留在表单里。";
+        ticketError.hidden = false;
+      } finally {
+        ticketSubmitting = false;
+        ticketSubmit.disabled = false;
+        ticketCancel.disabled = false;
+      }
+    }
+
+    function openRefundForm(messageId, orderId, button) {
+      if (!Number.isSafeInteger(conversationId) || !/^\d{4,20}$/.test(String(orderId))) return;
+      pendingRefund = { conversationId, messageId, orderId, button };
+      refundForm.reset();
+      refundOrder.value = `订单 ${orderId}`;
+      refundError.hidden = true;
+      refundModal.hidden = false;
+      refundReason.focus();
+    }
+
+    function closeRefundForm() {
+      if (refundSubmitting) return;
+      refundModal.hidden = true;
+      refundForm.reset();
+      refundError.hidden = true;
+      const button = pendingRefund?.button;
+      pendingRefund = null;
+      if (button?.isConnected && !button.disabled) button.focus();
+    }
+
+    async function submitRefundForm(event) {
+      event.preventDefault();
+      if (!pendingRefund || refundSubmitting) return;
+      if (!refundReason.value) {
+        refundError.textContent = "请从固定类目中选择退款原因。";
+        refundError.hidden = false;
+        refundReason.focus();
+        return;
+      }
+      const action = pendingRefund;
+      refundSubmitting = true;
+      refundSubmit.disabled = true;
+      refundCancel.disabled = true;
+      refundError.hidden = true;
+      try {
+        const response = await fetch(`/v1/conversations/${encodeURIComponent(action.conversationId)}/refund-requests`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: userId, message_id: action.messageId,
+            order_id: action.orderId, reason: refundReason.value,
+            description: refundDescription.value.trim() || null,
+          }),
+        });
+        if (!response.ok) throw new Error("refund application failed");
+        const result = await response.json();
+        refundSubmitting = false;
+        action.button.disabled = true;
+        closeRefundForm();
+        addMessage("assistant", `退款申请已提交：${result.request_no}（${result.status}）。提交时间：${formatTicketTime(result.created_at)}。`);
+      } catch (_) {
+        refundError.textContent = "退款申请暂时无法保存，请稍后重试；您选择的原因与说明仍保留在表单里。";
+        refundError.hidden = false;
+      } finally {
+        refundSubmitting = false;
+        refundSubmit.disabled = false;
+        refundCancel.disabled = false;
+      }
+    }
+
+    function renderSuggestedActions(assistant, actions, messageId, relatedOrderId = null) {
+      assistant.actions.replaceChildren();
+      if (!Array.isArray(actions) || !Number.isSafeInteger(messageId)) return;
+      for (const action of ["转人工", "建工单", "申请退款"]) {
+        if (!actions.includes(action)) continue;
+        if (action === "申请退款" && !/^\d{4,20}$/.test(String(relatedOrderId))) continue;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "suggested-action";
+        button.textContent = action;
+        button.addEventListener("click", async () => {
+          if (action === "转人工") {
+            if (!window.confirm("仅模拟转接展示，不会连接真人客服。确定继续吗？")) return;
+            button.disabled = true;
+            addMessage("assistant", "人工转接演示已开始");
+            addMessage("assistant", "此为模拟坐席，未连接真人客服。正式服务可接入客服工单或在线坐席系统。");
+            return;
+          }
+          if (action === "申请退款") {
+            openRefundForm(messageId, relatedOrderId, button);
+            return;
+          }
+          openTicketForm(messageId, button);
+        });
+        assistant.actions.appendChild(button);
+      }
+    }
+
+    function showTyping(assistant) {
+      const typing = document.createElement("span");
+      typing.className = "typing-dots";
+      typing.setAttribute("aria-label", "正在输入");
+      for (let index = 0; index < 3; index += 1) {
+        typing.appendChild(document.createElement("i"));
+      }
+      assistant.copy.replaceChildren(typing);
+    }
+
+    function renderStreamingText(assistant, text) {
+      if (window.PawHelpMarkdown) window.PawHelpMarkdown.render(assistant.copy, text);
+      else assistant.copy.textContent = text;
+      const caret = document.createElement("span");
+      caret.className = "streaming-caret";
+      caret.setAttribute("aria-hidden", "true");
+      assistant.copy.appendChild(caret);
+      scrollToLatest();
+    }
+
+    function toolBadgeText(label, status) {
+      if (status === "succeeded") return `✓ ${label} · 已完成`;
+      if (status === "failed") return `× ${label} · 未完成（失败或拦截）`;
+      return `↻ ${label} · 执行中`;
+    }
+
+    function updateToolTracePresentation(assistant) {
+      assistant.traces.classList.add("reported");
+      let summary = assistant.traces.querySelector(".tool-trace-summary");
+      if (!summary) {
+        summary = document.createElement("span");
+        summary.className = "tool-trace-summary";
+        assistant.traces.prepend(summary);
+      }
+      const count = assistant.badges.size;
+      summary.textContent = count
+        ? `本轮工具调用记录 ${count} 条（含失败或拦截，历史查询不计入）`
+        : "本轮未调用工具（未进行新的工具查询）";
+
+      let toggle = assistant.traces.querySelector(".tool-trace-toggle");
+      if (count > 3 && !toggle) {
+        toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "tool-trace-toggle";
+        toggle.addEventListener("click", () => {
+          assistant.traceExpanded = !assistant.traceExpanded;
+          updateToolTracePresentation(assistant);
+          scrollToLatest();
+        });
+        assistant.traces.appendChild(toggle);
+      }
+      if (toggle) {
+        assistant.traces.appendChild(toggle);
+        toggle.hidden = count <= 3;
+        toggle.textContent = assistant.traceExpanded
+          ? "收起工具记录"
+          : `查看全部 ${count} 条工具记录`;
+      }
+      let index = 0;
+      for (const badge of assistant.badges.values()) {
+        badge.hidden = count > 3 && !assistant.traceExpanded && index >= 3;
+        index += 1;
+      }
+    }
+
+    function upsertToolBadge(assistant, callId, label, status) {
+      if (typeof callId !== "string" || !callId) return;
+      if (typeof label !== "string" || !label) return;
+      const safeStatus = ["running", "succeeded", "failed"].includes(status)
+        ? status
+        : "running";
+      let badge = assistant.badges.get(callId);
+      if (!badge) {
+        badge = document.createElement("span");
+        badge.className = "tool-badge";
+        badge.dataset.index = String(assistant.badges.size + 1);
+        assistant.badges.set(callId, badge);
+        assistant.traces.appendChild(badge);
+      }
+      badge.dataset.label = label;
+      badge.className = `tool-badge ${safeStatus}`;
+      badge.textContent = `#${badge.dataset.index} ${toolBadgeText(label, safeStatus)}`;
+      updateToolTracePresentation(assistant);
+      scrollToLatest();
+    }
+
+    function markRunningBadgesFailed(assistant) {
+      for (const badge of assistant.badges.values()) {
+        if (badge.classList.contains("running")) {
+          badge.className = "tool-badge failed";
+          badge.textContent = `#${badge.dataset.index} ${toolBadgeText(badge.dataset.label, "failed")}`;
+        }
+      }
+    }
+
+    function addSuggestions() {
+      const suggestions = document.createElement("div");
+      suggestions.className = "suggestions";
+      suggestions.id = "suggestions";
+      for (const text of ["查询订单物流", "商品如何退换", "发票问题"]) {
+        const button = document.createElement("button");
+        button.className = "suggestion";
+        button.type = "button";
+        button.textContent = text;
+        button.addEventListener("click", () => sendMessage(text));
+        suggestions.appendChild(button);
+      }
+      messages.appendChild(suggestions);
+    }
+
+    function renderWelcome() {
+      activeTicketPreview = null;
+      messages.replaceChildren();
+      addDayLabel();
+      addMessage(
+        "assistant",
+        "你好，我是小喵。\n订单、物流或售后问题都可以告诉我，我会尽力帮你理清下一步。",
+      );
+      addSuggestions();
+      scrollToLatest();
+    }
+
+    function parseEventBlock(block) {
+      let eventName = "message";
+      const dataLines = [];
+
+      for (const line of block.split(/\r?\n/)) {
+        if (!line || line.startsWith(":")) continue;
+        const colon = line.indexOf(":");
+        const field = colon === -1 ? line : line.slice(0, colon);
+        let value = colon === -1 ? "" : line.slice(colon + 1);
+        if (value.startsWith(" ")) value = value.slice(1);
+        if (field === "event") eventName = value;
+        if (field === "data") dataLines.push(value);
+      }
+
+      if (!dataLines.length) return null;
+      try {
+        return { event: eventName, data: JSON.parse(dataLines.join("\n")) };
+      } catch (_) {
+        throw new PublicFacingError("收到的流式响应格式无效，请重试。");
+      }
+    }
+
+    async function readEventStream(response, onEvent) {
+      if (!response.body) throw new PublicFacingError("当前浏览器不支持流式响应");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      const drain = (flush = false) => {
+        if (flush) buffer += decoder.decode();
+        let match;
+        while ((match = buffer.match(/\r?\n\r?\n/))) {
+          const block = buffer.slice(0, match.index);
+          buffer = buffer.slice(match.index + match[0].length);
+          const parsed = parseEventBlock(block);
+          if (parsed) onEvent(parsed.event, parsed.data);
+        }
+        if (flush && buffer.trim()) {
+          const parsed = parseEventBlock(buffer);
+          if (parsed) onEvent(parsed.event, parsed.data);
+          buffer = "";
+        }
+      };
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        drain();
+      }
+      drain(true);
+    }
+
+    function errorMessage(payload, fallback) {
+      const detail = payload?.detail;
+      if (typeof detail === "string") return detail;
+      if (detail?.message) return detail.message;
+      if (detail?.code === "context_budget_exceeded") return "本次输入过长或模型上下文预算不足，请缩短输入，或请管理员检查窗口配置。历史会话仍然保留。";
+      return fallback;
+    }
+
+    function startOperation() {
+      if (activeController) activeController.abort();
+      const operation = {
+        controller: new AbortController(),
+        epoch: conversationEpoch,
+      };
+      activeController = operation.controller;
+      return operation;
+    }
+
+    function isCurrentOperation(operation) {
+      return (
+        operation.epoch === conversationEpoch
+        && activeController === operation.controller
+        && !operation.controller.signal.aborted
+      );
+    }
+
+    function finishOperation(operation) {
+      if (activeController === operation.controller) activeController = null;
+    }
+
+    function applyToolTrace(assistant, trace) {
+      for (const item of Array.isArray(trace) ? trace : []) {
+        if (!item || typeof item !== "object") continue;
+        upsertToolBadge(
+          assistant,
+          item.call_id || item.tool_call_id,
+          item.label + (item.source === "mcp" ? `（MCP · ${item.mcp_server || "外部"}）` : ""),
+          item.status,
+        );
+      }
+      updateToolTracePresentation(assistant);
+    }
+
+    function renderHistory(history) {
+      messages.replaceChildren();
+      addDayLabel();
+      let latestUserText = "";
+      for (const item of history) {
+        if (!item || !["user", "assistant"].includes(item.role)) continue;
+        const rendered = addMessage(
+          item.role,
+          typeof item.content === "string" ? item.content : "",
+        );
+        if (item.role === "user" && typeof item.content === "string") {
+          latestUserText = item.content;
+        }
+        if (item.role === "assistant") {
+          applyToolTrace(rendered, item.tool_trace);
+          renderFinalAnswer(rendered, item.content, item.sources, item.id);
+          renderSuggestedActions(rendered, item.suggested_actions, item.id, item.related_order_id);
+        }
+      }
+      if (!history.length) {
+        renderWelcome();
+        return;
+      }
+      conversationPreview.textContent = latestUserText || "已恢复当前会话";
+      scrollToLatest();
+    }
+
+    let conversationListEpoch = 0;
+    async function refreshConversationList() {
+      const epoch = ++conversationListEpoch;
+      try {
+        const response = await fetch("/api/conversations", { headers: { "X-Demo-User-Id": userId } });
+        if (!response.ok) return; // The sidebar must never break the chat.
+        const rows = await response.json();
+        if (epoch !== conversationListEpoch || !Array.isArray(rows)) return;
+        const list = document.querySelector("#conversationList");
+        list.replaceChildren();
+        for (const row of rows) {
+          if (!Number.isSafeInteger(row.id) || row.id < 1) continue;
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "session-button";
+          button.setAttribute("aria-current", row.id === conversationId ? "true" : "false");
+          button.textContent = row.preview || "新会话";
+          const badge = document.createElement("small");
+          badge.textContent = `会话 ${row.id}`;
+          button.appendChild(badge);
+          button.addEventListener("click", () => switchConversation(row.id));
+          list.appendChild(button);
+        }
+      } catch (_) { /* silent degradation, current conversation stays usable */ }
+    }
+
+    async function switchConversation(id) {
+      if (ticketSubmitting || refundSubmitting || isStreaming || id === conversationId) return;
+      activeTicketPreview = null;
+      closeTicketForm();
+      closeRefundForm();
+      sourceModal.hidden = true;
+      conversationEpoch += 1;
+      if (activeController) activeController.abort();
+      activeController = null;
+      conversationId = id;
+      contextStatus.refresh();
+      localStorage.setItem(CONVERSATION_ID_KEY, String(id));
+      input.value = "";
+      messages.replaceChildren();
+      await hydrateConversation();
+      refreshConversationList();
+    }
+
+    async function hydrateConversation() {
+      if (!conversationId) {
+        renderWelcome();
+        return;
+      }
+
+      const requestedConversationId = conversationId;
+      const operation = startOperation();
+      isStreaming = true;
+      agentStatus.textContent = "正在恢复会话…";
+      resizeInput();
+
+      try {
+        const response = await fetch(
+          `/v1/conversations/${encodeURIComponent(requestedConversationId)}/messages`,
+          {
+            headers: { "X-Demo-User-Id": userId },
+            signal: operation.controller.signal,
+          },
+        );
+        if (!isCurrentOperation(operation)) return;
+
+        if (response.status === 404) {
+          renderWelcome();
+          return;
+        }
+        if (!response.ok) {
+          let payload = null;
+          try { payload = await response.json(); } catch (_) { /* keep fallback */ }
+          throw new PublicFacingError(
+            errorMessage(payload, `恢复会话失败（${response.status}）`),
+          );
+        }
+
+        let history;
+        try { history = await response.json(); } catch (_) {
+          throw new PublicFacingError("收到的历史记录格式无效，请刷新重试。");
+        }
+        if (!Array.isArray(history)) {
+          throw new PublicFacingError("收到的历史记录格式无效，请刷新重试。");
+        }
+        if (isCurrentOperation(operation)) {
+          const savedFeedback = readFeedback();
+          for (const message of history) {
+            if (message.feedback) savedFeedback[String(message.id)] = message.feedback;
+          }
+          localStorage.setItem(FEEDBACK_KEY, JSON.stringify(savedFeedback));
+          renderHistory(history);
+          activeTicketPreview = null;
+          const pendingResponse = await fetch(
+            `/v1/conversations/${encodeURIComponent(requestedConversationId)}/pending-order`,
+            { headers: { "X-Demo-User-Id": userId }, signal: operation.controller.signal },
+          );
+          if (pendingResponse.ok && isCurrentOperation(operation)) {
+            const pending = await pendingResponse.json();
+            if (pending.pending && pending.selection) {
+              renderOrderSelection(addMessage("assistant"), pending.selection);
+            }
+          }
+          const ticketResponse = await fetch(`/v1/conversations/${encodeURIComponent(requestedConversationId)}/pending-ticket`, {
+            headers: { "X-Demo-User-Id": userId }, signal: operation.controller.signal,
+          });
+          if (ticketResponse.ok && isCurrentOperation(operation)) {
+            const pending = await ticketResponse.json();
+            if (pending.pending && pending.confirmation) renderTicketConfirmation(addMessage("assistant"), pending.confirmation);
+          }
+        }
+      } catch (error) {
+        if (error.name === "AbortError" || !isCurrentOperation(operation)) return;
+        renderWelcome();
+        const failure = addMessage("assistant", "", "error");
+        failure.copy.textContent = error instanceof PublicFacingError
+          ? error.message
+          : "会话暂时无法恢复，请稍后刷新重试。";
+      } finally {
+        if (isCurrentOperation(operation)) {
+          finishOperation(operation);
+          isStreaming = false;
+          agentStatus.textContent = "在线，通常立即回复";
+          resizeInput();
+          input.focus();
+          scrollToLatest();
+        }
+      }
+    }
+
+    function renderOrderSelection(assistant, payload) {
+      assistant.copy.textContent = payload.message || "请选择要处理的演示订单。";
+      assistant.actions.replaceChildren();
+      const choices = document.createElement("div");
+      choices.className = "order-choice-list";
+      const orders = Array.isArray(payload.orders) ? payload.orders : [];
+      for (const order of orders) {
+        if (!order || !/^\d{4,20}$/.test(String(order.order_id))) continue;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "order-choice";
+        button.textContent = order.label || `演示订单 ${order.order_id}`;
+        const item = document.createElement("small");
+        item.textContent = order.item || order.product || "商品信息未提供";
+        button.appendChild(item);
+        const status = document.createElement("small");
+        status.textContent = `${order.status_label || "状态未提供"} · ¥${order.amount || "—"}`;
+        button.appendChild(status);
+        for (const [label, value] of [["下单", order.created_at], ["签收", order.delivered_at]]) {
+          if (!value) continue;
+          const date = document.createElement("small");
+          date.textContent = `${label}：${formatTicketTime(value)}`;
+          button.appendChild(date);
+        }
+        button.addEventListener("click", () => resumeSelectedOrder(order.order_id, payload.message_id, choices));
+        choices.appendChild(button);
+      }
+      assistant.actions.appendChild(choices);
+      scrollToLatest();
+    }
+
+    let activeTicketPreview = null;
+
+    function renderTicketConfirmation(assistant, payload) {
+      activeTicketPreview = payload;
+      assistant.copy.textContent = "工单预览：请核对后确认提交。确认前不会创建工单。";
+      assistant.actions.replaceChildren();
+      const card = document.createElement("div");
+      card.className = "order-choice-list";
+      card.dataset.ticketPreview = payload.proposal_id;
+      const type = document.createElement("p");
+      type.textContent = `反馈类别：${payload.ticket_type}`;
+      const description = document.createElement("p");
+      description.textContent = `问题描述：${payload.description}`;
+      description.style.whiteSpace = "pre-wrap";
+      card.append(type, description);
+      for (const [text, confirmed] of [["确认提交", true], ["取消", false]]) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "order-choice";
+        button.textContent = text;
+        button.addEventListener("click", () => resumeTicketConfirmation(payload, confirmed, card));
+        card.appendChild(button);
+      }
+      assistant.actions.appendChild(card);
+      scrollToLatest();
+    }
+
+    async function resumeTicketConfirmation(payload, confirmed, card) {
+      if (isStreaming || !conversationId || activeTicketPreview?.proposal_id !== payload.proposal_id) return;
+      for (const button of card.querySelectorAll("button")) button.disabled = true;
+      isStreaming = true;
+      const assistant = addMessage("assistant");
+      showTyping(assistant);
+      const operation = startOperation();
+      try {
+        const response = await fetch(`/v1/conversations/${encodeURIComponent(conversationId)}/confirm-ticket`, {
+          method: "POST", headers: { "Content-Type": "application/json", "Accept": "text/event-stream" },
+          body: JSON.stringify({ user_id: userId, message_id: payload.message_id, proposal_id: payload.proposal_id, confirmed }),
+          signal: operation.controller.signal,
+        });
+        if (!response.ok) throw new PublicFacingError("工单预览已失效或已处理，请刷新会话核对。");
+        await consumeChatResponse(response, assistant, operation);
+        if (activeTicketPreview?.proposal_id === payload.proposal_id) activeTicketPreview = null;
+        const result = document.createElement("p");
+        result.textContent = confirmed ? "确认请求已处理，请以上方结果为准。" : "已取消，不提交工单。";
+        card.replaceChildren(result);
+      } catch (error) {
+        if (error.name === "AbortError" || !isCurrentOperation(operation)) return;
+        markRunningBadgesFailed(assistant);
+        assistant.copy.textContent = error instanceof PublicFacingError ? error.message : "确认请求失败，请刷新核对；不会自动重复写入。";
+        for (const button of card.querySelectorAll("button")) button.disabled = false;
+      } finally {
+        if (isCurrentOperation(operation)) { finishOperation(operation); isStreaming = false; resizeInput(); }
+      }
+    }
+
+    async function consumeChatResponse(response, assistant, operation) {
+      let assistantText = "";
+      let completed = false;
+      await readEventStream(response, (event, data) => {
+        if (!isCurrentOperation(operation)) return;
+        if (event === "conversation" && Number.isSafeInteger(data.conversation_id) && data.conversation_id > 0) {
+          const changed = conversationId !== data.conversation_id;
+          conversationId = data.conversation_id;
+          if (changed) contextStatus.refresh();
+          localStorage.setItem(CONVERSATION_ID_KEY, String(conversationId));
+          refreshConversationList();
+        } else if (event === "tool_status") {
+          upsertToolBadge(assistant, data.call_id, data.label + (data.source === "mcp" ? `（MCP · ${data.mcp_server || "外部"}）` : ""), data.status);
+        } else if (event === "token") {
+          assistantText += data.content ?? "";
+          renderStreamingText(assistant, assistantText);
+        } else if (event === "order_selection") {
+          renderOrderSelection(assistant, data);
+          completed = true;
+        } else if (event === "ticket_confirmation") {
+          renderTicketConfirmation(assistant, data);
+          completed = true;
+        } else if (event === "done") {
+          assistantText = data.content ?? assistantText;
+          renderFinalAnswer(assistant, assistantText, data.sources, data.message_id);
+          applyToolTrace(assistant, data.tool_trace);
+          renderSuggestedActions(assistant, data.suggested_actions, data.message_id, data.related_order_id);
+          completed = true;
+          refreshConversationList();
+        } else if (event === "error") {
+          throw new PublicFacingError(data.message || "客服暂时开小差了，请稍后再试。");
+        }
+      });
+      if (!completed) throw new PublicFacingError("连接意外结束，请重新发送。");
+    }
+
+    async function resumeSelectedOrder(orderId, messageId, choices) {
+      if (isStreaming || !conversationId) return;
+      for (const button of choices.querySelectorAll("button")) button.disabled = true;
+      addMessage("user", `已选择订单 ${orderId}`);
+      isStreaming = true;
+      agentStatus.textContent = "正在查询订单与政策…";
+      const assistant = addMessage("assistant");
+      showTyping(assistant);
+      const operation = startOperation();
+      try {
+        const response = await fetch(`/v1/conversations/${encodeURIComponent(conversationId)}/select-order`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "text/event-stream" },
+          body: JSON.stringify({ user_id: userId, order_id: orderId, message_id: messageId }),
+          signal: operation.controller.signal,
+        });
+        if (!response.ok) throw new PublicFacingError("订单选择已失效，请重新提出问题。");
+        await consumeChatResponse(response, assistant, operation);
+      } catch (error) {
+        if (error.name === "AbortError" || !isCurrentOperation(operation)) return;
+        markRunningBadgesFailed(assistant);
+        assistant.row.classList.add("error");
+        assistant.copy.textContent = error instanceof PublicFacingError ? error.message : "订单查询失败，请重试。";
+        for (const button of choices.querySelectorAll("button")) button.disabled = false;
+      } finally {
+        if (isCurrentOperation(operation)) {
+          finishOperation(operation);
+          isStreaming = false;
+          agentStatus.textContent = "在线，通常立即回复";
+          input.focus();
+        }
+      }
+    }
+
+    async function sendMessage(text) {
+      if (isStreaming || !text.trim()) return;
+      if (activeTicketPreview) {
+        addMessage("assistant", "请先确认或取消当前工单预览，再继续聊天。");
+        return;
+      }
+
+      const suggestions = document.querySelector("#suggestions");
+      if (suggestions) suggestions.remove();
+
+      const normalizedText = text.trim();
+      addMessage("user", normalizedText);
+      conversationPreview.textContent = normalizedText;
+
+      input.value = "";
+      isStreaming = true;
+      resizeInput();
+      agentStatus.textContent = "正在输入…";
+
+      const assistant = addMessage("assistant");
+      showTyping(assistant);
+      const operation = startOperation();
+
+      try {
+        const response = await fetch("/v1/chat/stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "text/event-stream" },
+          body: JSON.stringify({
+            user_id: userId,
+            conversation_id: conversationId,
+            message: normalizedText,
+          }),
+          signal: operation.controller.signal,
+        });
+
+        if (!isCurrentOperation(operation)) return;
+
+        if (!response.ok) {
+          let payload = null;
+          try { payload = await response.json(); } catch (_) { /* keep fallback */ }
+          throw new PublicFacingError(errorMessage(payload, `请求失败（${response.status}）`));
+        }
+
+        await consumeChatResponse(response, assistant, operation);
+      } catch (error) {
+        if (error.name === "AbortError" || !isCurrentOperation(operation)) return;
+        markRunningBadgesFailed(assistant);
+        assistant.row.classList.add("error");
+        assistant.copy.textContent = error instanceof PublicFacingError
+          ? error.message
+          : "连接失败，请稍后再试。";
+      } finally {
+        if (isCurrentOperation(operation)) {
+          finishOperation(operation);
+          isStreaming = false;
+          agentStatus.textContent = "在线，通常立即回复";
+          resizeInput();
+          input.focus();
+          scrollToLatest();
+        }
+      }
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      sendMessage(input.value);
+    });
+
+    input.addEventListener("input", resizeInput);
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+    newChatButton.addEventListener("click", () => {
+      if (ticketSubmitting || refundSubmitting) return;
+      closeTicketForm();
+      closeRefundForm();
+      conversationEpoch += 1;
+      if (activeController) activeController.abort();
+      activeController = null;
+      conversationId = null;
+      contextStatus.refresh();
+      localStorage.removeItem(CONVERSATION_ID_KEY);
+      renderWelcome();
+      conversationPreview.textContent = "随时为你解答订单问题";
+      agentStatus.textContent = "在线，通常立即回复";
+      isStreaming = false;
+      resizeInput();
+      input.focus();
+      refreshConversationList();
+    });
+
+    sourceClose.addEventListener("click", () => { sourceModal.hidden = true; });
+    sourceModal.addEventListener("click", (event) => {
+      if (event.target === sourceModal) sourceModal.hidden = true;
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !sourceModal.hidden) sourceModal.hidden = true;
+      if (event.key === "Escape" && !ticketModal.hidden) closeTicketForm();
+      if (event.key === "Escape" && !refundModal.hidden) closeRefundForm();
+    });
+    ticketForm.addEventListener("submit", submitTicketForm);
+    ticketCancel.addEventListener("click", closeTicketForm);
+    ticketModal.addEventListener("click", (event) => {
+      if (event.target === ticketModal) closeTicketForm();
+    });
+    refundForm.addEventListener("submit", submitRefundForm);
+    refundCancel.addEventListener("click", closeRefundForm);
+    refundModal.addEventListener("click", (event) => {
+      if (event.target === refundModal) closeRefundForm();
+    });
+
+    resizeInput();
+    hydrateConversation();
+    refreshConversationList();
+    })().catch(() => {
+      const warning = document.createElement("p"); warning.setAttribute("role", "alert");
+      warning.textContent = "会话初始化未完成。请勿清除浏览器数据，请联系维护人员核对本地会话迁移后再刷新。";
+      warning.style.cssText = "padding:16px;border:2px solid #a42d30;background:#fff2dd;position:relative;z-index:10";
+      document.body.prepend(warning);
+      document.querySelectorAll("form input, form textarea, form select, form button").forEach(element => { element.disabled = true; });
+    });
+  </script>
+</body>
+</html>

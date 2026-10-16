@@ -1,0 +1,2 @@
+# Preserve published browser distributions and their recorded SHA-256 on Windows.
+app/static/vendor/*.js -text

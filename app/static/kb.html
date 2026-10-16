@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PawHelp 知识库工作台</title>
+  <style>
+    :root {
+      --ink: #101010;
+      --paper: #fffdf5;
+      --yellow: #ffe66d;
+      --coral: #ff6b6b;
+      --mint: #55cec7;
+      --blue: #9ac5ff;
+      --green: #a8e6a3;
+      --muted: #6d6d68;
+      --line: 4px solid var(--ink);
+      --shadow: 8px 8px 0 var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      overflow-y: auto;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, transparent 24px, rgba(16,16,16,.06) 25px, transparent 26px) 0 0 / 48px 48px,
+        var(--yellow);
+    }
+
+    button, input, textarea, select { font: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+
+    .shell {
+      width: min(1480px, calc(100% - 32px));
+      margin: 22px auto 46px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 22px 26px;
+      border: var(--line);
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .page-nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px;
+      border: 3px solid var(--ink);
+      background: white;
+      box-shadow: 4px 4px 0 var(--ink);
+    }
+    .page-nav a {
+      padding: 6px 10px;
+      border: 2px solid transparent;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 900;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .page-nav a:hover { border-color: var(--ink); background: var(--mint); }
+    .page-nav a[aria-current="page"] { border-color: var(--ink); background: var(--yellow); }
+
+    .brand { display: flex; align-items: center; gap: 16px; }
+    .logo {
+      display: grid;
+      place-items: center;
+      width: 58px;
+      height: 58px;
+      border: var(--line);
+      background: var(--coral);
+      font-size: 30px;
+      transform: rotate(-3deg);
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 5px; font-size: clamp(23px, 3vw, 37px); }
+    .subtitle { margin: 0; color: var(--muted); font-weight: 700; }
+
+    .button, button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 44px;
+      padding: 9px 16px;
+      border: 3px solid var(--ink);
+      color: var(--ink);
+      background: var(--yellow);
+      box-shadow: 4px 4px 0 var(--ink);
+      font-weight: 900;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform .12s, box-shadow .12s;
+    }
+    .button:hover, button:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
+    .button:active, button:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
+    button:disabled { opacity: .55; cursor: wait; transform: none; }
+    .button.coral, button.coral { background: var(--coral); }
+    .button.mint, button.mint { background: var(--mint); }
+    .button.blue, button.blue { background: var(--blue); }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 16px;
+      margin: 24px 0;
+    }
+    .metric {
+      padding: 17px 20px;
+      border: var(--line);
+      background: var(--paper);
+      box-shadow: 5px 5px 0 var(--ink);
+    }
+    .metric:nth-child(2) { background: var(--green); }
+    .metric:nth-child(3) { background: var(--yellow); }
+    .metric:nth-child(4) { background: var(--blue); }
+    .metric:nth-child(5) { background: var(--mint); }
+    .metric strong { display: block; font-size: 31px; line-height: 1; }
+    .metric span { display: block; margin-top: 8px; font-weight: 800; }
+
+    .full-stack { display: grid; gap: 22px; }
+    .panel {
+      min-width: 0;
+      padding: 22px;
+      border: var(--line);
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 17px;
+    }
+    .panel h2 { margin: 0; font-size: 21px; }
+    .tag {
+      padding: 5px 10px;
+      border: 2px solid var(--ink);
+      background: var(--yellow);
+      font: 800 12px ui-monospace, monospace;
+    }
+
+    .preview-list, .chunk-list, .search-results {
+      display: grid;
+      gap: 12px;
+    }
+
+    .preview-list { max-height: 640px; overflow-y: auto; padding-right: 7px; }
+    .preview-card, .chunk-card, .result-card {
+      padding: 15px;
+      border: 3px solid var(--ink);
+      background: white;
+    }
+    .preview-card.key { background: #fff3b1; }
+    .card-meta { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 9px; }
+    .pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border: 2px solid var(--ink);
+      background: var(--mint);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .pill.pending { background: var(--coral); }
+    .pill.done { background: var(--green); }
+    .card-title { margin-bottom: 7px; font-weight: 900; }
+    .card-answer { margin: 0; color: #333; line-height: 1.65; white-space: pre-wrap; }
+    .card-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 13px; }
+    .card-actions button { min-height: 34px; padding: 5px 11px; box-shadow: 3px 3px 0 var(--ink); }
+    .danger { color: white; background: #d93434; }
+
+    form { display: grid; gap: 13px; }
+    label { display: grid; gap: 6px; font-weight: 900; }
+    input, textarea, select {
+      width: 100%;
+      border: 3px solid var(--ink);
+      border-radius: 0;
+      padding: 10px 12px;
+      color: var(--ink);
+      background: white;
+      outline: none;
+    }
+    input:focus, textarea:focus, select:focus { box-shadow: 4px 4px 0 var(--mint); }
+    textarea { min-height: 100px; resize: vertical; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .checkbox { display: flex; align-items: center; gap: 9px; }
+    .checkbox input { width: 20px; height: 20px; accent-color: var(--coral); }
+
+    .action-box {
+      padding: 16px;
+      border: 3px dashed var(--ink);
+      background: #f8f5e9;
+    }
+    .action-box p { margin-bottom: 13px; line-height: 1.6; }
+    .table-wrap { width: 100%; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: white; }
+    th, td { padding: 10px; border: 2px solid var(--ink); text-align: left; vertical-align: top; }
+    th { background: #ff9d52; font-size: 13px; }
+    td.number { text-align: right; font-variant-numeric: tabular-nums; }
+    td button { min-height: 32px; padding: 4px 9px; box-shadow: 2px 2px 0 var(--ink); }
+    tr.duplicate td { background: #ffe6ea; }
+    .inline-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
+    .mini-metrics { display: flex; flex-wrap: wrap; gap: 10px; }
+    .mini-metric { min-width: 128px; padding: 10px 12px; border: 3px solid var(--ink); background: white; }
+    .mini-metric strong { display: block; font-size: 23px; }
+    .mini-metric span { font-size: 12px; font-weight: 800; }
+    .section-copy { color: var(--muted); line-height: 1.6; }
+    #markdownInput { min-height: 230px; font-family: ui-monospace, "Cascadia Mono", monospace; }
+    .preview-summary { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+    .search-controls {
+      display: grid;
+      grid-template-columns: minmax(320px, 1fr) 280px 150px auto;
+      align-items: end;
+      gap: 10px;
+    }
+    .search-controls label {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      gap: 9px;
+      white-space: nowrap;
+    }
+    .search-controls label select { min-width: 210px; }
+    .search-controls label input[type="number"] { min-width: 78px; }
+    .query-examples { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .query-examples button { min-height: 32px; padding: 4px 10px; background: white; box-shadow: 2px 2px 0 var(--ink); }
+    .search-meta { margin-top: 12px; font-weight: 800; }
+
+    .toolbar { display: flex; align-items: center; gap: 10px; }
+    .toolbar select { width: auto; min-width: 120px; }
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 3px solid var(--ink);
+    }
+    .pagination button { min-height: 38px; padding: 7px 12px; }
+    .pagination button:disabled { cursor: not-allowed; opacity: .45; transform: none; }
+    .page-summary { margin-right: auto; font-weight: 900; }
+    .page-size { display: flex; align-items: center; gap: 7px; }
+    .page-size select { width: auto; min-width: 72px; padding: 7px 9px; }
+    .empty {
+      padding: 24px;
+      border: 3px dashed var(--ink);
+      color: var(--muted);
+      text-align: center;
+      font-weight: 800;
+      background: #f8f5e9;
+    }
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 10;
+      max-width: min(440px, calc(100vw - 48px));
+      padding: 14px 18px;
+      border: var(--line);
+      background: var(--green);
+      box-shadow: 6px 6px 0 var(--ink);
+      font-weight: 900;
+    }
+    .toast.error { color: white; background: #d93434; }
+    .hidden { display: none !important; }
+
+    @media (max-width: 900px) {
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .search-controls { grid-template-columns: 1fr 1fr; }
+      header { align-items: flex-start; flex-direction: column; }
+      .header-actions { width: 100%; justify-content: space-between; flex-wrap: wrap; }
+    }
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 18px, 1480px); margin-top: 9px; }
+      header, .panel { padding: 16px; }
+      .metrics, .row { grid-template-columns: 1fr; }
+      .search-controls { grid-template-columns: 1fr; }
+      .pagination { justify-content: space-between; }
+      .page-summary { width: 100%; margin-right: 0; }
+    }
+  </style>
+  <link rel="stylesheet" href="/static/navigation.css">
+  <script src="/static/navigation.js" defer></script>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true">🐱</div>
+        <div>
+          <h1>知识库工作台</h1>
+          <p class="subtitle">维护服务知识，检查索引状态与检索结果。</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <nav class="page-nav" aria-label="全局页面导航" data-app-navigation>
+          <a href="/">聊天</a>
+          <a href="/kb" aria-current="page">知识库</a>
+          <a href="/rag-eval">评测</a>
+        </nav>
+      </div>
+    </header>
+
+    <section class="metrics" aria-label="知识库概览">
+      <div class="metric"><strong id="materialCount">—</strong><span>知识材料</span></div>
+      <div class="metric"><strong id="chunkCount">—</strong><span>MySQL 知识块</span></div>
+      <div class="metric"><strong id="pendingCount">—</strong><span>pending 待补</span></div>
+      <div class="metric"><strong id="milvusCount">—</strong><span>Milvus 条数</span></div>
+      <div class="metric"><strong id="consistencyCount">—</strong><span>双写状态</span></div>
+    </section>
+
+    <div class="full-stack">
+      <section class="panel">
+        <div class="panel-head"><h2>01 · 建库材料</h2><span id="materialSummary" class="tag">读取中</span></div>
+        <p class="section-copy">预览服务端知识文档的切分结果，确认后再导入知识库。</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>文件</th><th>类型</th><th>字符</th><th>行</th><th>切块</th><th>关键条款</th><th>特征</th><th>操作</th></tr></thead>
+            <tbody id="materialList"><tr><td colspan="8">正在读取材料…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="inline-actions">
+          <button id="refreshMaterials" type="button">刷新材料清单</button>
+          <button id="syncMaterialsButton" class="coral" type="button">重建离线库（文档切块 → pending → Milvus）</button>
+          <span class="section-copy">只重建 Markdown，并清理旧 FAQ 表迁移数据；保留手工和历史对话知识。</span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>02 · 材料切块预览</h2><span id="previewCount" class="tag">请选择材料</span></div>
+        <div id="previewList" class="preview-list"><div class="empty">点击材料表里的“看切块”，先检查结构感知切分结果。</div></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>03 · 对话挖知识</h2><span class="tag">LLM 单批</span></div>
+        <p class="section-copy">从尚未处理的历史客服对话抽取 QA，先进入暂存表，再全局去重写入 knowledge_chunks。</p>
+        <div class="mini-metrics">
+          <div class="mini-metric"><strong id="miningUnprocessed">—</strong><span>待处理会话</span></div>
+          <div class="mini-metric"><strong id="miningExtracted">—</strong><span>暂存待去重</span></div>
+          <div class="mini-metric"><strong id="miningKept">—</strong><span>去重保留</span></div>
+          <div class="mini-metric"><strong id="miningDiscarded">—</strong><span>去重丢弃</span></div>
+          <div class="mini-metric"><strong id="miningBatches">—</strong><span>批次数</span></div>
+        </div>
+        <div class="inline-actions">
+          <button id="mineConversationsButton" class="coral" type="button">抽取下一批并去重入库</button>
+          <label class="checkbox"><input id="mineVectorize" type="checkbox" checked>入库后补齐向量</label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>04 · Markdown 手工录入</h2><span class="tag">正文贴这里</span></div>
+        <p class="section-copy">按标题层级切块，识别关键条款和表格。预览会用“问法 + 正文”指纹检查库内重复。</p>
+        <form id="markdownForm">
+          <div class="row">
+            <label>内容类型<select name="content_type"><option value="policy">政策条款</option><option value="faq">商品 FAQ</option><option value="manual">售后手册</option></select></label>
+            <div class="inline-actions"><button id="fillMarkdownExample" type="button">填一段示例</button><button id="clearMarkdown" type="button">清空</button></div>
+          </div>
+          <textarea id="markdownInput" name="markdown" placeholder="# 一级标题&#10;&#10;## 二级标题&#10;&#10;在这里粘贴完整 Markdown 正文……" required></textarea>
+          <div class="inline-actions">
+            <button id="previewMarkdown" class="coral" type="button">切块预览（不写库）</button>
+            <button id="ingestMarkdown" type="submit">录入入库</button>
+            <label class="checkbox"><input name="vectorize_after" type="checkbox" checked>入库后顺手向量化</label>
+          </div>
+        </form>
+        <div id="markdownSummary" class="preview-summary"></div>
+        <div id="markdownPreview" class="table-wrap"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>05 · 向量化与双写</h2><span id="dualWriteTag" class="tag">检查中</span></div>
+        <p class="section-copy">MySQL 保存权威原文，Milvus 保存向量和检索字段。故障中断后点击补齐会只处理 pending。</p>
+        <div class="mini-metrics">
+          <div class="mini-metric"><strong id="vectorPending">—</strong><span>pending 待补</span></div>
+          <div class="mini-metric"><strong id="vectorDone">—</strong><span>done 已向量化</span></div>
+          <div class="mini-metric"><strong id="vectorMilvus">—</strong><span>Milvus 条数</span></div>
+          <div class="mini-metric"><strong id="vectorCollection">—</strong><span>集合</span></div>
+        </div>
+        <div class="inline-actions"><button id="vectorizeButton" class="mint" type="button">⚡ 补齐 pending 向量</button></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>06 · 检索自测</h2><span class="tag">可切换路线</span></div>
+        <form id="searchForm" class="search-controls">
+          <input name="query" placeholder="试试：邮费是多少" required>
+          <label>路线<select name="strategy"><option value="dense">dense 向量单路</option><option value="bm25">BM25 关键词</option><option value="hybrid">混合 RRF</option><option value="hybrid_rerank" selected>混合 + Rerank</option></select></label>
+          <label>Top‑K<input name="top_k" type="number" min="1" max="20" value="5"></label>
+          <button class="blue" type="submit">检索</button>
+        </form>
+        <div class="query-examples"><button type="button">邮费是多少</button><button type="button">运费怎么算</button><button type="button">MH-LP100 适合多大的猫</button><button type="button">猫粮过期了能退吗</button></div>
+        <div id="searchMeta" class="search-meta"></div>
+        <div id="searchResults" class="search-results" style="margin-top:16px"></div>
+      </section>
+
+      <section id="manualEditor" class="panel">
+        <div class="panel-head"><h2>07 · 单条录入 / 编辑</h2><span class="tag">兼容原能力</span></div>
+        <form id="manualForm">
+          <div class="row"><label>分类<input name="category" maxlength="255" placeholder="例如：配送服务" required></label><label>内容类型<select name="content_type"><option value="manual">售后手册</option><option value="faq">商品 FAQ</option><option value="policy">政策条款</option></select></label></div>
+          <label>用户问法<input name="questions" placeholder="例如：邮费在哪里看？" required></label>
+          <label>标准答案<textarea name="answer" placeholder="输入可以直接支持客服回答的完整内容" required></textarea></label>
+          <label>章节路径（可选）<input name="section_path" maxlength="512" placeholder="例如：配送服务 / 费用说明"></label>
+          <label class="checkbox"><input name="is_key_clause" type="checkbox">这是关键条款</label>
+          <div class="card-actions"><button id="manualSubmit" class="coral" type="submit">＋ 写入待向量化知识</button><button id="cancelEdit" class="hidden" type="button">取消编辑</button></div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>08 · 已入库知识</h2><div class="toolbar"><select id="statusFilter" aria-label="向量化状态筛选"><option value="">全部状态</option><option value="pending">pending</option><option value="done">done</option></select><button id="refreshChunks" type="button">刷新</button></div></div>
+        <div id="chunkList" class="chunk-list"><div class="empty">正在读取知识块…</div></div>
+        <div class="pagination" aria-label="已入库知识分页"><span id="pageSummary" class="page-summary" aria-live="polite">第 1 / 1 页 · 共 0 条</span><label class="page-size">每页<select id="pageSize" aria-label="每页显示条数"><option value="10">10 条</option><option value="20">20 条</option><option value="50">50 条</option></select></label><button id="prevPage" type="button">← 上一页</button><button id="nextPage" type="button">下一页 →</button></div>
+      </section>
+    </div>
+  </main>
+
+  <div id="toast" class="toast hidden" role="status"></div>
+
+  <script>
+    const materialList = document.querySelector("#materialList");
+    const previewList = document.querySelector("#previewList");
+    const previewCount = document.querySelector("#previewCount");
+    const chunkList = document.querySelector("#chunkList");
+    const searchResults = document.querySelector("#searchResults");
+    const searchMeta = document.querySelector("#searchMeta");
+    const markdownSummary = document.querySelector("#markdownSummary");
+    const markdownPreview = document.querySelector("#markdownPreview");
+    const statusFilter = document.querySelector("#statusFilter");
+    const pageSize = document.querySelector("#pageSize");
+    const pageSummary = document.querySelector("#pageSummary");
+    const prevPage = document.querySelector("#prevPage");
+    const nextPage = document.querySelector("#nextPage");
+    const toast = document.querySelector("#toast");
+    let chunks = [];
+    let chunkPage = 1;
+    let chunkTotalPages = 1;
+    let editingId = null;
+    let toastTimer = null;
+
+    function showToast(message, error = false) {
+      clearTimeout(toastTimer);
+      toast.textContent = message;
+      toast.classList.toggle("error", error);
+      toast.classList.remove("hidden");
+      toastTimer = setTimeout(() => toast.classList.add("hidden"), 4200);
+    }
+
+    async function api(path, options = {}) {
+      const response = await fetch(path, {
+        headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+        ...options,
+      });
+      let payload = null;
+      try { payload = await response.json(); } catch (_) { /* keep null */ }
+      if (!response.ok) {
+        const detail = payload?.detail;
+        throw new Error(typeof detail === "string" ? detail : detail?.message || "请求失败");
+      }
+      return payload;
+    }
+
+    function empty(target, message) {
+      target.replaceChildren(Object.assign(document.createElement("div"), { className: "empty", textContent: message }));
+    }
+
+    function tableMessage(target, message, colspan) {
+      const row = document.createElement("tr");
+      const cell = document.createElement("td");
+      cell.colSpan = colspan;
+      cell.textContent = message;
+      row.append(cell);
+      target.replaceChildren(row);
+    }
+
+    function pill(text, className = "") {
+      const item = document.createElement("span");
+      item.className = `pill ${className}`.trim();
+      item.textContent = text;
+      return item;
+    }
+
+    function renderKnowledgeCard(row, kind = "chunk-card", editable = false) {
+      const card = document.createElement("article");
+      card.className = kind;
+      const meta = document.createElement("div");
+      meta.className = "card-meta";
+      if (row.id) meta.append(pill(`#${row.id}`));
+      meta.append(pill(row.category || "未分类"));
+      if (row.content_type) meta.append(pill(row.content_type));
+      if (row.source_kind) meta.append(pill(row.source_kind));
+      if (row.vectorize_status) meta.append(pill(row.vectorize_status, row.vectorize_status));
+      if (row.is_key_clause) meta.append(pill("关键条款", "pending"));
+      if (typeof row.score === "number") meta.append(pill(`score ${row.score.toFixed(4)}`, "done"));
+      const title = document.createElement("div");
+      title.className = "card-title";
+      title.textContent = row.questions;
+      const answer = document.createElement("p");
+      answer.className = "card-answer";
+      answer.textContent = row.answer;
+      card.append(meta, title, answer);
+      if (editable && row.id) {
+        const actions = document.createElement("div");
+        actions.className = "card-actions";
+        const edit = document.createElement("button");
+        edit.type = "button";
+        edit.textContent = "编辑";
+        edit.addEventListener("click", () => startEdit(row));
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "danger";
+        remove.textContent = "删除";
+        remove.addEventListener("click", () => deleteChunk(row));
+        actions.append(edit, remove);
+        card.append(actions);
+      }
+      return card;
+    }
+
+    function resetManualForm() {
+      const form = document.querySelector("#manualForm");
+      form.reset();
+      editingId = null;
+      document.querySelector("#manualSubmit").textContent = "＋ 写入待向量化知识";
+      document.querySelector("#cancelEdit").classList.add("hidden");
+    }
+
+    function startEdit(row) {
+      const form = document.querySelector("#manualForm");
+      editingId = row.id;
+      form.elements.category.value = row.category || "";
+      form.elements.content_type.value = row.content_type || "manual";
+      form.elements.questions.value = row.questions || "";
+      form.elements.answer.value = row.answer || "";
+      form.elements.section_path.value = row.section_path || "";
+      form.elements.is_key_clause.checked = Boolean(row.is_key_clause);
+      document.querySelector("#manualSubmit").textContent = `保存并更新向量 #${row.id}`;
+      document.querySelector("#cancelEdit").classList.remove("hidden");
+      form.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    async function deleteChunk(row) {
+      if (!confirm(`确定删除知识 #${row.id}？MySQL 原文和 Milvus 向量都会删除。`)) return;
+      try {
+        await api(`/v1/knowledge/chunks/${row.id}`, { method: "DELETE" });
+        if (editingId === row.id) resetManualForm();
+        showToast(`知识 #${row.id} 已删除`);
+        await loadChunks();
+        await loadOverview();
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function loadMaterials() {
+      try {
+        const materials = await api("/v1/knowledge/materials");
+        document.querySelector("#materialCount").textContent = materials.length;
+        document.querySelector("#materialSummary").textContent = `${materials.length} 份材料 / 共 ${materials.reduce((sum, row) => sum + row.chunk_count, 0)} 块`;
+        materialList.replaceChildren();
+        if (!materials.length) return tableMessage(materialList, "knowledge/ 下还没有支持的 Markdown 材料。", 8);
+        materials.forEach((material) => {
+          const row = document.createElement("tr");
+          const values = [
+            material.path,
+            material.content_type,
+            String(material.character_count),
+            String(material.line_count),
+            String(material.chunk_count),
+            String(material.key_clause_count),
+            material.table_chunk_count ? `表格块 ${material.table_chunk_count}` : `${material.chunk_count} 节`,
+          ];
+          values.forEach((value, index) => {
+            const cell = document.createElement("td");
+            cell.textContent = value;
+            if ([2, 3, 4, 5].includes(index)) cell.className = "number";
+            row.append(cell);
+          });
+          const action = document.createElement("td");
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = "看切块";
+          button.addEventListener("click", () => previewMaterial(material.path));
+          action.append(button);
+          row.append(action);
+          materialList.append(row);
+        });
+      } catch (error) {
+        tableMessage(materialList, error.message, 8);
+        showToast(error.message, true);
+      }
+    }
+
+    async function previewMaterial(path) {
+      empty(previewList, "正在进行结构感知切块…");
+      try {
+        const drafts = await api("/v1/knowledge/preview", {
+          method: "POST",
+          body: JSON.stringify({ path }),
+        });
+        previewCount.textContent = `${drafts.length} 个知识块`;
+        previewList.replaceChildren();
+        if (!drafts.length) return empty(previewList, "这个材料没有生成知识块。");
+        drafts.forEach((draft) => {
+          const card = renderKnowledgeCard(draft, "preview-card");
+          if (draft.is_key_clause) card.classList.add("key");
+          previewList.append(card);
+        });
+      } catch (error) {
+        empty(previewList, error.message);
+        showToast(error.message, true);
+      }
+    }
+
+    async function loadOverview() {
+      try {
+        const result = await api("/v1/knowledge/overview");
+        document.querySelector("#materialCount").textContent = result.materials;
+        document.querySelector("#chunkCount").textContent = result.mysql_total;
+        document.querySelector("#pendingCount").textContent = result.pending_total;
+        document.querySelector("#milvusCount").textContent = result.milvus_total ?? "不可用";
+        const state = result.dual_write_consistent === null ? "无法检查" : result.dual_write_consistent ? "一致" : "需补齐";
+        document.querySelector("#consistencyCount").textContent = state;
+        document.querySelector("#vectorPending").textContent = result.pending_total;
+        document.querySelector("#vectorDone").textContent = result.done_total;
+        document.querySelector("#vectorMilvus").textContent = result.milvus_total ?? "—";
+        document.querySelector("#vectorCollection").textContent = result.milvus_collection;
+        document.querySelector("#dualWriteTag").textContent = `双写 ${state}`;
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function loadMiningStats() {
+      try {
+        const result = await api("/v1/knowledge/mining/stats");
+        document.querySelector("#miningUnprocessed").textContent = result.unprocessed_conversations;
+        document.querySelector("#miningExtracted").textContent = result.extracted;
+        document.querySelector("#miningKept").textContent = result.kept;
+        document.querySelector("#miningDiscarded").textContent = result.discarded;
+        document.querySelector("#miningBatches").textContent = result.batches;
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    function markdownPayload() {
+      const form = document.querySelector("#markdownForm");
+      const values = new FormData(form);
+      return {
+        markdown: values.get("markdown"),
+        content_type: values.get("content_type"),
+        vectorize_after: values.get("vectorize_after") === "on",
+      };
+    }
+
+    function renderMarkdownPreview(result) {
+      markdownSummary.replaceChildren(
+        pill(`共 ${result.total} 块 / ${result.total} 节`),
+        pill(`表格块 ${result.table_block_count}`),
+        pill(`关键条款 ${result.key_clause_count}`, result.key_clause_count ? "pending" : ""),
+        pill(`重复 ${result.duplicate_count}`, result.duplicate_count ? "pending" : "done"),
+        pill(`可入库 ${result.ingestible_count}`, "done"),
+      );
+      if (!result.items.length) return empty(markdownPreview, "没有生成可入库的知识块。");
+      const table = document.createElement("table");
+      const head = document.createElement("thead");
+      const headRow = document.createElement("tr");
+      ["#", "节（section_path）", "问法 questions", "正文 answer", "字数", "标记"].forEach((text) => {
+        const cell = document.createElement("th");
+        cell.textContent = text;
+        headRow.append(cell);
+      });
+      head.append(headRow);
+      const body = document.createElement("tbody");
+      result.items.forEach((item, index) => {
+        const row = document.createElement("tr");
+        if (item.duplicate) row.className = "duplicate";
+        const marks = [
+          item.is_key_clause ? "关键条款" : "",
+          item.is_table_block ? "表格块" : "",
+          item.duplicate ? "重复，跳过" : "可入库",
+        ].filter(Boolean).join(" · ");
+        [String(index + 1), item.section_path || "未标章节", item.questions, item.answer, String(item.answer.length), marks].forEach((value, cellIndex) => {
+          const cell = document.createElement("td");
+          cell.textContent = value;
+          if ([0, 4].includes(cellIndex)) cell.className = "number";
+          row.append(cell);
+        });
+        body.append(row);
+      });
+      table.append(head, body);
+      markdownPreview.replaceChildren(table);
+    }
+
+    async function previewManualMarkdown() {
+      const payload = markdownPayload();
+      if (!String(payload.markdown || "").trim()) return showToast("请先粘贴 Markdown 正文", true);
+      empty(markdownPreview, "正在切块并检查重复…");
+      try {
+        const result = await api("/v1/knowledge/preview-markdown", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        renderMarkdownPreview(result);
+      } catch (error) {
+        empty(markdownPreview, error.message);
+        showToast(error.message, true);
+      }
+    }
+
+    function renderChunks() {
+      chunkList.replaceChildren();
+      if (!chunks.length) return empty(chunkList, "当前筛选条件下没有知识块。");
+      chunks.forEach((row) => chunkList.append(renderKnowledgeCard(row, "chunk-card", true)));
+    }
+
+    async function loadChunks(requestedPage = chunkPage) {
+      try {
+        const params = new URLSearchParams({
+          page: String(requestedPage),
+          page_size: pageSize.value,
+        });
+        if (statusFilter.value) params.set("status", statusFilter.value);
+        const result = await api(`/v1/knowledge/chunks?${params}`);
+        if (requestedPage > result.total_pages) {
+          await loadChunks(result.total_pages);
+          return;
+        }
+        chunks = result.items;
+        chunkPage = result.page;
+        chunkTotalPages = result.total_pages;
+        document.querySelector("#chunkCount").textContent = result.all_total;
+        document.querySelector("#pendingCount").textContent = result.pending_total;
+        document.querySelector("#vectorDone").textContent = result.done_total;
+        document.querySelector("#vectorPending").textContent = result.pending_total;
+        pageSummary.textContent = `第 ${chunkPage} / ${chunkTotalPages} 页 · 共 ${result.total} 条`;
+        prevPage.disabled = chunkPage <= 1;
+        nextPage.disabled = chunkPage >= chunkTotalPages;
+        renderChunks();
+      } catch (error) {
+        empty(chunkList, error.message);
+        showToast(error.message, true);
+      }
+    }
+
+    document.querySelector("#manualForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const submit = form.querySelector("button[type=submit]");
+      const values = new FormData(form);
+      submit.disabled = true;
+      try {
+        const target = editingId ? `/v1/knowledge/chunks/${editingId}` : "/v1/knowledge/chunks";
+        const method = editingId ? "PUT" : "POST";
+        const row = await api(target, {
+          method,
+          body: JSON.stringify({
+            category: values.get("category"),
+            questions: values.get("questions"),
+            answer: values.get("answer"),
+            section_path: values.get("section_path") || null,
+            content_type: values.get("content_type"),
+            is_key_clause: values.get("is_key_clause") === "on",
+          }),
+        });
+        const wasEditing = editingId !== null;
+        resetManualForm();
+        showToast(wasEditing ? `知识 #${row.id} 已更新并重新向量化` : `知识 #${row.id} 已写入，状态为 pending`);
+        await loadChunks(wasEditing ? chunkPage : 1);
+        await loadOverview();
+      } catch (error) {
+        showToast(error.message, true);
+      } finally {
+        submit.disabled = false;
+      }
+    });
+
+    document.querySelector("#cancelEdit").addEventListener("click", resetManualForm);
+
+    document.querySelector("#fillMarkdownExample").addEventListener("click", () => {
+      document.querySelector("#markdownInput").value = "# 发票与开票\n\n## 开票时效\n\n订单完成后 30 天内可申请开票，平台在收到申请后 3 个工作日内开出电子发票。\n\n> [!IMPORTANT]\n> 超过申请期限请联系人工客服处理。\n\n## 可开票类型\n\n| 类型 | 开票内容 |\n|---|---|\n| 电子普票 | 商品明细或办公用品 |\n| 电子专票 | 需补齐纳税人识别号 |";
+    });
+    document.querySelector("#clearMarkdown").addEventListener("click", () => {
+      document.querySelector("#markdownForm").reset();
+      markdownSummary.replaceChildren();
+      markdownPreview.replaceChildren();
+    });
+    document.querySelector("#previewMarkdown").addEventListener("click", previewManualMarkdown);
+    document.querySelector("#markdownForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = document.querySelector("#ingestMarkdown");
+      const payload = markdownPayload();
+      button.disabled = true;
+      button.textContent = "正在查重并入库…";
+      try {
+        const result = await api("/v1/knowledge/ingest-markdown", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        showToast(`入库 ${result.inserted} 块，跳过重复 ${result.skipped_duplicates} 块，向量化 ${result.vectorized} 块`);
+        await previewManualMarkdown();
+        await loadChunks(1);
+        await loadOverview();
+      } catch (error) {
+        showToast(error.message, true);
+      } finally {
+        button.disabled = false;
+        button.textContent = "录入入库";
+      }
+    });
+
+    document.querySelector("#mineConversationsButton").addEventListener("click", async (event) => {
+      if (!confirm("该操作会调用当前配置的上游模型抽取一批历史对话，是否继续？")) return;
+      const button = event.currentTarget;
+      button.disabled = true;
+      button.textContent = "正在抽取、去重并入库…";
+      try {
+        const result = await api("/v1/knowledge/mining/run", {
+          method: "POST",
+          body: JSON.stringify({
+            confirm_external_model_usage: true,
+            vectorize_after: document.querySelector("#mineVectorize").checked,
+          }),
+        });
+        showToast(`处理 ${result.conversations} 个会话，抽取 ${result.extracted} 条，保留 ${result.kept} 条，丢弃 ${result.discarded} 条，向量化 ${result.vectorized} 条`);
+        await loadMiningStats();
+        await loadChunks(1);
+        await loadOverview();
+      } catch (error) {
+        showToast(error.message, true);
+      } finally {
+        button.disabled = false;
+        button.textContent = "抽取下一批并去重入库";
+      }
+    });
+
+    document.querySelector("#syncMaterialsButton").addEventListener("click", async (event) => {
+      if (!confirm("确定用服务器上当前的 Markdown 重新同步知识库？旧 FAQ 表迁移数据会被清理，手工知识和历史对话知识会保留。")) return;
+      const button = event.currentTarget;
+      button.disabled = true;
+      button.textContent = "正在切块、同步并生成向量…";
+      try {
+        const result = await api("/v1/knowledge/sync-materials", { method: "POST", body: "{}" });
+        showToast(`同步完成：替换 ${result.replaced} 条，写入 ${result.ingested} 条，向量化 ${result.vectorized} 条`);
+        await loadChunks();
+        await loadOverview();
+        await loadMaterials();
+      } catch (error) {
+        showToast(error.message, true);
+      } finally {
+        button.disabled = false;
+        button.textContent = "重建离线库（文档切块 → pending → Milvus）";
+      }
+    });
+
+    document.querySelector("#vectorizeButton").addEventListener("click", async (event) => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      button.textContent = "正在加载模型并写入 Milvus…";
+      try {
+        const result = await api("/v1/knowledge/vectorize-pending", { method: "POST", body: "{}" });
+        showToast(result.vectorized ? `已补齐 ${result.vectorized} 个知识向量` : "没有需要补齐的 pending 知识");
+        await loadChunks();
+        await loadOverview();
+      } catch (error) {
+        showToast(error.message, true);
+      } finally {
+        button.disabled = false;
+        button.textContent = "⚡ 补齐 pending 向量";
+      }
+    });
+
+    document.querySelector("#searchForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const button = form.querySelector("button");
+      const values = new FormData(form);
+      const query = values.get("query");
+      button.disabled = true;
+      searchMeta.textContent = "正在执行检索…";
+      empty(searchResults, "正在检索并从 MySQL 回表…");
+      try {
+        const result = await api("/v1/knowledge/search", {
+          method: "POST",
+          body: JSON.stringify({
+            query,
+            strategy: values.get("strategy"),
+            top_k: Number(values.get("top_k")),
+          }),
+        });
+        const synonyms = result.synonyms.length ? ` · 扩展：${result.synonyms.join("、")}` : "";
+        searchMeta.textContent = `路线 ${result.strategy} · 标准问法：${result.normalized_query}${synonyms} · ${result.confident ? "证据置信度通过" : "证据置信度不足"}`;
+        searchResults.replaceChildren();
+        if (!result.matches.length) return empty(searchResults, "没有达到相似度阈值的结果。");
+        result.matches.forEach((row) => searchResults.append(renderKnowledgeCard(row, "result-card")));
+      } catch (error) {
+        empty(searchResults, error.message);
+        showToast(error.message, true);
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    document.querySelectorAll(".query-examples button").forEach((button) => {
+      button.addEventListener("click", () => {
+        const form = document.querySelector("#searchForm");
+        form.elements.query.value = button.textContent;
+        form.requestSubmit();
+      });
+    });
+
+    statusFilter.addEventListener("change", () => loadChunks(1));
+    pageSize.addEventListener("change", () => loadChunks(1));
+    prevPage.addEventListener("click", () => loadChunks(chunkPage - 1));
+    nextPage.addEventListener("click", () => loadChunks(chunkPage + 1));
+    document.querySelector("#refreshChunks").addEventListener("click", () => loadChunks());
+    document.querySelector("#refreshMaterials").addEventListener("click", loadMaterials);
+    loadMaterials();
+    loadOverview();
+    loadMiningStats();
+    loadChunks();
+  </script>
+</body>
+</html>

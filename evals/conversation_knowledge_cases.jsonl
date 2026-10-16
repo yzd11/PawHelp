@@ -1,0 +1,2 @@
+{"id":"reusable_shipping","conversation_id":900001,"messages":[{"role":"user","content":"邮费要去哪里看？"},{"role":"assistant","content":"配送费用会根据订单和地区计算，提交订单前可在结算页查看实际运费。"}],"expected_min":1,"required_any":["邮费","运费","配送费"],"answer_required_any":["结算页"]}
+{"id":"order_specific_status","conversation_id":900002,"messages":[{"role":"user","content":"订单 1001 现在到哪里了？"},{"role":"assistant","content":"订单 1001 当前位于深圳配送中心，预计明天送达。"}],"expected_max":0,"required_any":[],"answer_required_any":[]}

@@ -1,0 +1,5 @@
+{
+  "mcp:logistics:query_logistics": "read",
+  "mcp:aftersales:query_warranty": "read",
+  "mcp:aftersales:query_return_progress": "read"
+}

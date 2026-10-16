@@ -1,0 +1,3 @@
+{"id":"logistics","message":"订单 1001 的物流到哪了","expected_tool":"query_logistics","expected_outcome":"answer"}
+{"id":"return_policy","message":"退货政策是什么","expected_tool":"query_faq","expected_outcome":"answer"}
+{"id":"postage","message":"邮费是多少","expected_tool":"query_faq","expected_outcome":"postage_answer"}

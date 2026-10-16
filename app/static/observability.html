@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>观测与成本 · PawHelp</title>
+  <link rel="stylesheet" href="/static/operations.css"><link rel="stylesheet" href="/static/navigation.css">
+  <link rel="stylesheet" href="/static/observability.css"><script src="/static/navigation.js" defer></script>
+</head>
+<body><main class="observability-page">
+  <header>
+    <div class="operations-brand"><div class="brand-mark" aria-hidden="true">📈</div><div><h1>用量与成本</h1><p class="subtitle">查看模型用量、证据阈值与评测趋势。</p></div></div>
+    <nav data-app-navigation></nav>
+  </header>
+  <section>
+    <div class="toolbar"><h2>运行概览</h2><button id="load">刷新报表</button><a class="external-link" id="langfuse" href="http://127.0.0.1:3000" target="_blank" rel="noopener">打开 Langfuse ↗</a></div>
+    <p id="status" role="status" aria-live="polite">正在读取观测数据…</p><p id="configuration" class="muted"></p>
+    <p class="muted">刷新报表不调用模型；执行评估前需确认费用。</p>
+  </section>
+  <section aria-labelledby="costTitle">
+    <div class="toolbar"><h2 id="costTitle">意图成本账</h2><span class="data-source">应用用量台账</span><label for="days">统计窗口</label><select id="days"><option value="1">近 1 天</option><option value="7" selected>近 7 天</option><option value="30">近 30 天</option></select></div>
+    <p class="muted">按意图汇总供应商返回的 token；请求数是图执行次数，中断后的恢复也会单独计数，不等于独立用户问题数。一次执行可能含多次模型调用。空用量显示未采集，不等于零成本。</p>
+    <div id="costSummary" class="summary-grid"></div><div id="costBars" class="cost-bars"></div>
+    <h3>明细</h3><div id="costs" class="table-wrap"></div><p id="costInterpretation" class="report-reading"></p>
+  </section>
+  <section aria-labelledby="calibrationTitle">
+    <div class="toolbar"><h2 id="calibrationTitle">证据置信度校准</h2><span class="data-source">已标注召回快照</span></div>
+    <p class="notice">这是相关性预筛，不是“答案完整支持”的概率。放行后仍需模型检查完整证据。历史样本表现不代表线上错误率保证。</p>
+    <p id="calibrationStatus" role="status" aria-live="polite">正在读取校准记录…</p>
+    <div id="calibrationSummary" class="summary-grid"></div>
+    <h3>证据评分分布</h3><div id="calibrationDistribution" class="table-wrap"></div>
+    <h3>训练集阈值扫描</h3><p class="muted">选择时扫描 0–1、步长 0.001；曲线每 0.01 展示并包含精确阈值。独立验证集不参与选阈值。</p>
+    <div id="calibrationChart"></div><p id="calibrationReading" class="report-reading"></p>
+    <div class="explanation-grid"><div><h3>评分怎么算</h3><p id="formula"></p><p class="muted">重排分是模型相关性分，不是概率。分差取非负值；得分总和按 3 归一化并封顶。</p></div><div><h3>怎样理解误拦 / 误放</h3><p>相关证据没过闸叫误拦；不相关证据过闸叫误放。证据相关也可能缺少必要条件，不能直接据此回答。</p><p class="muted">“误放率”以全部不相关样本为分母；“放行中不相关占比”以放行样本为分母。</p></div></div>
+    <p id="calibrationNote" class="muted"></p><button id="analyzeCalibration">离线重算校准报告（无模型费用，不改阈值）</button>
+  </section>
+  <section aria-labelledby="trendTitle">
+    <div class="toolbar"><h2 id="trendTitle">评估趋势</h2><span class="data-source">eval_runs</span><label for="group">比较组</label><select id="group"></select></div>
+    <p class="notice">只有数据集、具体题目、知识文档、模型及评测配置相同的完整轮次才比较。部分失败只展示状态，不连线、不作为前一轮。</p>
+    <div id="trendSummary" class="summary-grid"></div><div id="trend"></div>
+    <h3>历史轮次 · 最新在上</h3><div id="runs" class="table-wrap"></div><p id="trendInterpretation" class="report-reading"></p>
+    <p class="muted">Recall@K / MRR 衡量召回与排名；Faithfulness 是回答事实有据的模型评分，不等于真实正确率。库外正确拒答率越高越好。</p>
+    <button id="evaluate" class="danger">运行小批量评估（调用模型，产生费用）</button>
+  </section>
+</main><script src="/static/operations-base.js"></script><script src="/static/observability.js"></script></body>
+</html>

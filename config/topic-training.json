@@ -1,0 +1,9 @@
+{
+  "provider": "local-windows-cuda",
+  "interpreter": ".venv/Scripts/python.exe",
+  "python": "3.12",
+  "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU",
+  "packages": {"torch": "2.14.0+cu130", "transformers": "5.17.0", "accelerate": "1.15.0"},
+  "base_model": "hfl/chinese-roberta-wwm-ext",
+  "train": {"max_length": 128, "microbatch": 2, "gradient_accumulation": 8, "max_epochs": 8, "full_parameters": true}
+}

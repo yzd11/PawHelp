@@ -1,0 +1,6 @@
+{
+  "description": "Per-class test F1 acceptance policy; not an inference threshold or production readiness certification.",
+  "strict": {"minimum_f1": 0.9, "labels": ["退换货", "物流", "尺码", "发票", "质量问题"]},
+  "standard": {"minimum_f1": 0.8, "labels": ["运费", "优惠活动", "价保", "支付", "订单修改", "库存补货", "商品信息", "保修维修"]},
+  "observe": {"minimum_f1": null, "labels": ["账号", "会员积分", "评价", "其他"]}
+}

@@ -1,0 +1,34 @@
+{
+  "formula_version": 2,
+  "purpose": "relevance_prefilter",
+  "threshold": 0.127,
+  "training": {
+    "size": 72,
+    "accepted": 60,
+    "unsafe_accepted": 0,
+    "unsafe_rate": 0.0,
+    "useful_recall": 1.0
+  },
+  "training_optimal_range": [
+    0.087,
+    0.166
+  ],
+  "validation": {
+    "size": 24,
+    "accepted": 17,
+    "unsafe_accepted": 0,
+    "unsafe_rate": 0.0,
+    "useful_recall": 0.85,
+    "passed": true
+  },
+  "validation_method": "independent",
+  "reranker_model": "BAAI/bge-reranker-v2-m3",
+  "corpus_fingerprint": "7b6612c1cb8fe132ac611c00adb09409172d780d70d850b388801e0eb89a11dd",
+  "dataset_sha256": "41d458374c91f5cab9da16d16ac23f1ec001c4d23a7aee6bcf87ac90e7f4b192",
+  "sample_count": 72,
+  "collection_mode": "raw query, local retrieval only; serving rewrite distribution must be audited",
+  "reviewer": "Claude 逐条原文审阅（要点字面命中作初稿），用户授权代做标注；不是人工业务核准",
+  "scope_limit": "96题小样本原始Top5快照；线上拆分/改写分布不同，需另验。评测题与知识文档均为自建生成，不代表生产错误率保证。",
+  "training_labels_sha256": "410768bdb1a2577a1782044268633eeeb26ad0cfaeb2cbe961850428e757993c",
+  "validation_labels_sha256": "b28f36088482a1bb962181b5ce57f41442822db2743c171568395e035e5860c0"
+}

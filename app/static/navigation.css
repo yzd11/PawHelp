@@ -1,0 +1,34 @@
+@import url('/static/console.css');
+/* Shared navigation, independent of each page's content layout. */
+[data-app-navigation].app-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  padding: 5px;
+  margin: 0;
+  max-width: 100%;
+  background: #fffdf6;
+  border: 3px solid #161616;
+  box-shadow: 4px 4px 0 #161616;
+  font: 900 12px/1.5 ui-monospace, "Cascadia Mono", "Microsoft YaHei", monospace;
+}
+[data-app-navigation].app-nav a {
+  display: block;
+  font: inherit;
+  padding: 6px 10px;
+  border: 2px solid transparent;
+  color: #161616;
+  background: transparent;
+  text-decoration: none;
+  white-space: nowrap;
+}
+[data-app-navigation].app-nav a:hover { background: #9ce2d4; }
+[data-app-navigation].app-nav a[aria-current="page"] { background: #ffe56a; border-color: #161616; }
+[data-app-navigation].app-nav a:focus-visible { outline: 3px solid #2765ce; outline-offset: 2px; }
+@media (max-width: 650px) {
+  .topbar .topbar-actions { flex-wrap: wrap; min-width: 0; }
+  .topbar .new-chat { flex-shrink: 0; }
+  [data-app-navigation].app-nav { gap: 2px; }
+  [data-app-navigation].app-nav a { padding: 5px 7px; }
+}

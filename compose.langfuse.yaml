@@ -1,0 +1,94 @@
+# Based on the official Langfuse v4 Compose template, isolated from MySQL/Milvus.
+# Secrets: copy .env.langfuse.example to .env.langfuse and replace ALL placeholders.
+name: pawhelp-observability
+services:
+  langfuse-worker:
+    image: docker.langfuse.com/langfuse/langfuse-worker:4
+    restart: unless-stopped
+    depends_on: &dependencies
+      postgres: {condition: service_healthy}
+      clickhouse: {condition: service_healthy}
+      minio: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    environment: &shared
+      NEXTAUTH_URL: http://localhost:3000
+      DATABASE_URL: postgresql://postgres:${LF_POSTGRES_PASSWORD:?configure .env.langfuse}@postgres:5432/postgres
+      SALT: ${LF_SALT:?configure .env.langfuse}
+      ENCRYPTION_KEY: ${LF_ENCRYPTION_KEY:?64 hex characters required}
+      TELEMETRY_ENABLED: "false"
+      LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: "false"
+      LANGFUSE_IN_APP_AGENT_ENABLED: "false"
+      CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:9000
+      CLICKHOUSE_URL: http://clickhouse:8123
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: ${LF_CLICKHOUSE_PASSWORD:?configure .env.langfuse}
+      CLICKHOUSE_CLUSTER_ENABLED: "false"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_AUTH: ${LF_REDIS_PASSWORD:?configure .env.langfuse}
+      REDIS_TLS_ENABLED: "false"
+      LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_EVENT_UPLOAD_REGION: auto
+      LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: minio
+      LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: ${LF_MINIO_PASSWORD:?configure .env.langfuse}
+      LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://minio:9000
+      LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+      LANGFUSE_S3_EVENT_UPLOAD_PREFIX: events/
+      LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_MEDIA_UPLOAD_REGION: auto
+      LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID: minio
+      LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY: ${LF_MINIO_PASSWORD:?configure .env.langfuse}
+      LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: http://minio:9000
+      LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE: "true"
+      LANGFUSE_S3_MEDIA_UPLOAD_PREFIX: media/
+      LANGFUSE_S3_BATCH_EXPORT_ENABLED: "false"
+  langfuse-web:
+    image: docker.langfuse.com/langfuse/langfuse:4
+    restart: unless-stopped
+    depends_on: *dependencies
+    ports: ["127.0.0.1:3000:3000"]
+    environment:
+      <<: *shared
+      NEXTAUTH_SECRET: ${LF_NEXTAUTH_SECRET:?configure .env.langfuse}
+      LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: http://localhost:9090
+      LANGFUSE_S3_MEDIA_UPLOAD_INTERNAL_ENDPOINT: http://minio:9000
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment: {POSTGRES_USER: postgres, POSTGRES_PASSWORD: "${LF_POSTGRES_PASSWORD:?configure .env.langfuse}", POSTGRES_DB: postgres, TZ: UTC, PGTZ: UTC}
+    volumes: ["postgres_data:/var/lib/postgresql/data"]
+    healthcheck: {test: ["CMD-SHELL", "pg_isready -U postgres"], interval: 5s, timeout: 5s, retries: 10}
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.12
+    restart: unless-stopped
+    user: "101:101"
+    environment: {CLICKHOUSE_DB: default, CLICKHOUSE_USER: clickhouse, CLICKHOUSE_PASSWORD: "${LF_CLICKHOUSE_PASSWORD:?configure .env.langfuse}"}
+    volumes: ["clickhouse_data:/var/lib/clickhouse", "clickhouse_logs:/var/log/clickhouse-server"]
+    healthcheck: {test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1"], interval: 5s, timeout: 5s, retries: 10}
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${LF_REDIS_PASSWORD:?configure .env.langfuse}", "--maxmemory-policy", "noeviction"]
+    volumes: ["redis_data:/data"]
+    healthcheck: {test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep PONG"], interval: 5s, timeout: 5s, retries: 10}
+    environment: {REDIS_PASSWORD: "${LF_REDIS_PASSWORD:?configure .env.langfuse}"}
+  minio:
+    image: cgr.dev/chainguard/minio
+    restart: unless-stopped
+    entrypoint: sh
+    command: -c 'mkdir -p /data/langfuse && minio server --address ":9000" --console-address ":9001" /data'
+    environment: {MINIO_ROOT_USER: minio, MINIO_ROOT_PASSWORD: "${LF_MINIO_PASSWORD:?configure .env.langfuse}"}
+    ports: ["127.0.0.1:9090:9000", "127.0.0.1:9191:9001"]
+    volumes: ["minio_data:/data"]
+    healthcheck: {test: ["CMD", "mc", "ready", "local"], interval: 5s, timeout: 5s, retries: 10}
+volumes:
+  postgres_data:
+    name: pawhelp_observability_postgres_data
+  clickhouse_data:
+    name: pawhelp_observability_clickhouse_data
+  clickhouse_logs:
+    name: pawhelp_observability_clickhouse_logs
+  redis_data:
+    name: pawhelp_observability_redis_data
+  minio_data:
+    name: pawhelp_observability_minio_data
