@@ -1,1 +1,56 @@
-.observability-page .toolbar{margin-bottom:16px}.data-source{border:2px solid var(--ink);background:var(--mint);padding:2px 9px;font-size:12px;font-weight:900}.summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:20px 0}.summary-card{border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:15px;min-width:0;background:#fffaf0}.summary-card .card-label{color:#555;font-size:12px}.summary-card strong{display:block;font-size:clamp(22px,2.2vw,32px);line-height:1.25;margin:8px 0;overflow-wrap:anywhere}.summary-card p{font-size:12px;margin:0;color:#555}.summary-card.warning{background:#ffe0dd}.cost-bars{margin:22px 0}.cost-bar{margin:14px 0}.bar-caption{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin-bottom:5px}.bar-track{height:15px;border:2px solid var(--ink);background:#fffaf0}.bar-fill{height:100%;background:#75bde3}.report-reading{border:2px dashed var(--ink);padding:14px;background:#fff6cf;overflow-wrap:anywhere;min-height:32px}.explanation-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}.explanation-grid>div{border:2px solid var(--ink);padding:16px}.observability-page h3{margin-top:22px;font-size:16px}.explanation-grid h3{margin-top:0}.observability-page .chart{width:100%;border:2px solid var(--ink);margin-top:12px}.observability-page .legend{margin:10px 0;font-weight:700}.metric{white-space:nowrap}.delta-down{color:#b01737;font-weight:900;background:#ffe4e7}.delta-up{color:#126449;font-weight:900}.table-wrap th{white-space:nowrap;background:#ffac62}.empty-report{padding:16px;border:2px dashed #888}.observability-page #group{max-width:520px}.observability-page section{scroll-margin-top:12px}.observability-page .muted{overflow-wrap:anywhere}@media(max-width:1000px){.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:540px){.summary-grid,.explanation-grid{grid-template-columns:1fr}.summary-card strong{font-size:26px}.bar-caption{font-size:12px}.observability-page #group{width:100%}.observability-page .toolbar label{margin-top:4px}}
+/* Usage and cost page. Shell and tokens come from theme.css + console.css + operations.css. */
+.observability-page section { scroll-margin-top: 12px; }
+.observability-page .toolbar { margin-bottom: 16px; }
+.observability-page .toolbar h2 { margin: 0; }
+.observability-page .toolbar label { font-size: 13px; font-weight: 700; }
+.observability-page .toolbar button { margin: 0; }
+.observability-page #group { max-width: 520px; }
+.observability-page h3 { margin: 24px 0 10px; font-size: 16px; }
+.observability-page .muted { overflow-wrap: anywhere; }
+.observability-page #configuration { font-family: var(--font-mono); }
+.data-source { padding: 1px 8px; border: 2px solid var(--ink); background: var(--sky-soft); font: 700 12px/1.6 var(--font-mono); }
+
+.summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 20px 0; }
+.summary-card { min-width: 0; padding: 16px 18px; border: var(--line); background: var(--surface); box-shadow: var(--shadow); }
+.summary-card.warning { background: var(--pink-soft); box-shadow: var(--shadow-pink); }
+.summary-card .card-label { display: block; color: var(--muted); font: 700 12px/1.5 var(--font-mono); letter-spacing: .04em; }
+.summary-card strong { display: block; margin: 10px 0 8px; overflow-wrap: anywhere; font: 700 clamp(22px, 2.2vw, 30px)/1.2 var(--font-mono); letter-spacing: -.02em; }
+.summary-card p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+
+.cost-bars { display: grid; gap: 14px; margin: 22px 0; }
+.bar-caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+.bar-caption span { color: var(--muted); font: 12px/1.6 var(--font-mono); }
+.bar-track { height: 18px; border: var(--line); background: var(--bg); }
+.bar-fill { height: 100%; background: var(--sky); }
+
+.observability-page .table-wrap table { border: var(--line); }
+.observability-page .table-wrap th { white-space: nowrap; }
+.observability-page .table-wrap tbody tr:last-child td { border-bottom: 0; }
+.observability-page .table-wrap tbody tr:hover td { background: var(--sky-soft); }
+.observability-page .table-wrap > .muted { margin: 0 0 10px; }
+.metric { white-space: nowrap; font-family: var(--font-mono); }
+.delta-down { padding: 0 4px; background: var(--pink-soft); color: var(--danger); font-weight: 700; }
+.delta-up { color: #3f6212; font-weight: 700; }
+.console-page .report-reading { margin: 16px 0 0; min-height: 32px; white-space: pre-line; overflow-wrap: anywhere; }
+.empty-report { margin: 0; padding: 20px; border: 2px dashed var(--ink); background: var(--bg); color: var(--muted); text-align: center; font-weight: 700; }
+
+.observability-page .chart { width: 100%; margin-top: 12px; border: var(--line); background: var(--surface); }
+.observability-page .chart text { fill: var(--muted); font: 12px var(--font-mono); }
+.observability-page .legend { gap: 18px; margin: 10px 0; font-size: 13px; font-weight: 700; }
+.observability-page .legend i { display: inline-block; width: 14px; height: 14px; margin-right: 6px; border: 2px solid var(--ink); vertical-align: -2px; }
+.observability-page .legend i.dashed { height: 0; width: 18px; border-width: 0; border-top: 3px dashed var(--ink); vertical-align: 4px; }
+
+.explanation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+.explanation-grid > div { padding: 16px 18px; border: 2px solid var(--rule); background: var(--bg); }
+.explanation-grid h3 { margin-top: 0; }
+.explanation-grid p { font-size: 13px; line-height: 1.7; }
+.observability-page #calibrationNote { white-space: pre-line; }
+
+@media (max-width: 1000px) {
+  .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 540px) {
+  .summary-grid, .explanation-grid { grid-template-columns: 1fr; }
+  .summary-card strong { font-size: 26px; }
+  .observability-page #group { width: 100%; }
+}

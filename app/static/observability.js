@@ -7,6 +7,9 @@ const percent=value=>finite(value)?`${(value*100).toFixed(1)}%`:"未评估";
 const time=value=>value?new Date(value).toLocaleString("zh-CN"):"未记录";
 const labels={recall_at_k:"Recall@K",mrr:"MRR",faithfulness:"Faithfulness",refusal_accuracy:"库外正确拒答率"};
 let groups=[],loadVersion=0,calibrationVersion=0;
+// Theme accents (theme.css); lines get an ink outline so pale colours stay legible.
+const COLORS={ink:"#1f2937",rule:"#e5e5e5",sky:"#38bdf8",lime:"#a3e635",pink:"#f472b6",amber:"#fbbf24"};
+function legendItem(label,color,dashed=false){const item=node("span"),swatch=node("i",undefined,dashed?"dashed":"");if(dashed)swatch.style.borderTopColor=color;else swatch.style.background=color;item.append(swatch,label);return item;}
 
 function cards(id,items){
  byId(id).replaceChildren(...items.map(([label,value,note,warning])=>{
@@ -22,23 +25,23 @@ function plot(id,rows,series,{x,caption,ticks,markers=[]}){
  const make=(tag,attrs,text)=>{const el=document.createElementNS(ns,tag);Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));if(text!==undefined)el.textContent=text;svg.append(el);return el;};
  make("title",{},caption);
  for(let i=0;i<=4;i++){
-  const y=25+(1-i/4)*245;make("line",{x1:55,y1:y,x2:850,y2:y,stroke:"#d5d0c4"});make("text",{x:8,y:y+5},(i/4).toFixed(2));
+  const y=25+(1-i/4)*245;make("line",{x1:55,y1:y,x2:850,y2:y,stroke:COLORS.rule,"stroke-width":2});make("text",{x:8,y:y+5},(i/4).toFixed(2));
  }
  const legend=node("div",undefined,"legend");
  series.forEach(([key,color,label])=>{
   let points=[];
-  const flush=()=>{if(points.length)make("polyline",{points:points.join(" "),fill:"none",stroke:color,"stroke-width":3});points=[];};
+  const flush=()=>{if(points.length){make("polyline",{points:points.join(" "),fill:"none",stroke:COLORS.ink,"stroke-width":6,"stroke-linejoin":"round"});make("polyline",{points:points.join(" "),fill:"none",stroke:color,"stroke-width":3,"stroke-linejoin":"round"});}points=[];};
   rows.forEach((row,i)=>{
    if(!finite(row[key])){flush();return;}
    const px=55+x(row,i)*795,py=25+(1-row[key])*245;points.push(`${px},${py}`);
-   if(rows.length<25)make("circle",{cx:px,cy:py,r:3,fill:color});
-  });flush();const labelNode=node("span",label);labelNode.style.color=color;legend.append(labelNode);
+   if(rows.length<25)make("circle",{cx:px,cy:py,r:4,fill:color,stroke:COLORS.ink,"stroke-width":2});
+  });flush();legend.append(legendItem(label,color));
  });
  ticks.forEach(([position,label])=>make("text",{x:55+position*795,y:300,"text-anchor":"middle"},label));
  markers.forEach(([position,color,label],index)=>{
   if(!finite(position))return;
   make("line",{x1:55+position*795,y1:25,x2:55+position*795,y2:270,stroke:color,"stroke-width":2,"stroke-dasharray":"5 5"});
-  const marker=node("span",label);marker.style.color=color;legend.append(marker);
+  legend.append(legendItem(label,color,true));
  });
  byId(id).replaceChildren(svg,legend);
 }
@@ -86,10 +89,10 @@ function renderCalibration(report){
   ["验证集 · 不相关误放率",percent(stats.irrelevant_pass_rate),`不相关样本中被放行的比例 · 误放 ${stats.unsafe_accepted} 条`,stats.unsafe_accepted>0],
  ]);
  byId("calibrationDistribution").replaceChildren(table(["类别","题数","最低","p25","中位","p75","最高"],report.distributions.map(r=>[r.group,r.count,...["min","p25","median","p75","max"].map(k=>number(r[k]))])));
- plot("calibrationChart",report.scan,[["relevant_pass_rate","#168463","相关样例放行率"],["irrelevant_pass_rate","#ce3153","不相关样例误放率"]],{
+ plot("calibrationChart",report.scan,[["relevant_pass_rate",COLORS.lime,"相关样例放行率"],["irrelevant_pass_rate",COLORS.pink,"不相关样例误放率"]],{
   x:r=>r.threshold,caption:"训练集证据相关性阈值扫描，纵轴为样例比例，横轴为阈值；独立验证不参与选择",
   ticks:[0,.2,.4,.6,.8,1].map(t=>[t,`阈值 ${t.toFixed(1)}`]),
-  markers:[[report.recommended_threshold,"#161616",`推荐 ${number(report.recommended_threshold)}`],[report.active_threshold,"#7054c6",`当前 ${number(report.active_threshold)}`]],
+  markers:[[report.recommended_threshold,COLORS.ink,`推荐 ${number(report.recommended_threshold)}`],[report.active_threshold,COLORS.sky,`当前 ${number(report.active_threshold)}`]],
  });
  const train=report.training_at_active||report.training_at_recommended;
  byId("calibrationReading").textContent=`${report.active?"当前":"历史推荐"}阈值下：训练集相关放行 ${percent(train.relevant_pass_rate)}，不相关误放 ${percent(train.irrelevant_pass_rate)}；放行中不相关占比 ${percent(train.unsafe_share)}。独立验证相关放行 ${percent(stats.relevant_pass_rate)}，不相关误放 ${percent(stats.irrelevant_pass_rate)}。这些是有限快照结果，不是生产安全保证。`;
@@ -113,7 +116,7 @@ function renderTrend(){
  ]);
  const valid=group.rows.filter(r=>r.comparable).reverse();
  if(valid.length<2)empty("trend","本组尚不足两轮完整评估，缺失指标不补零。" );
- else plot("trend",valid.map(r=>r.values),[["recall_at_k","#168463","Recall@K"],["mrr","#255dd0","MRR"],["faithfulness","#ce3153","Faithfulness"],["refusal_accuracy","#7054c6","库外正确拒答率"]],{
+ else plot("trend",valid.map(r=>r.values),[["recall_at_k",COLORS.sky,"Recall@K"],["mrr",COLORS.lime,"MRR"],["faithfulness",COLORS.pink,"Faithfulness"],["refusal_accuracy",COLORS.amber,"库外正确拒答率"]],{
   x:(_,i)=>i/(valid.length-1),caption:"同配置完整评估轮次趋势；横轴按评估顺序，缺失分数留空",
   ticks:valid.map((r,i)=>[i/(valid.length-1),`#${r.id}`]).filter((_,i)=>i===0||i===valid.length-1||i%Math.ceil(valid.length/8)===0),
  });
