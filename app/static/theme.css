@@ -1,0 +1,87 @@
+/* PawHelp theme: Neo-Brutalist Soft — square corners, 2px gray-800 borders,
+   translucent hard-edge shadows, pastel accents. Shared by every page. */
+:root {
+  color-scheme: light;
+  --bg: #f5f5f5;
+  --surface: #ffffff;
+  --text: #1a1a1a;
+  --muted: #525252;
+  --placeholder: #737373;
+  --ink: #1f2937;
+  --rule: #e5e5e5;
+  --pink: #f472b6;
+  --pink-soft: #fce7f3;
+  --lime: #a3e635;
+  --lime-soft: #ecfccb;
+  --sky: #38bdf8;
+  --sky-soft: #e0f2fe;
+  --amber: #fbbf24;
+  --amber-soft: #fef3c7;
+  --danger: #b91c1c;
+  --line: 2px solid var(--ink);
+  --shadow-sm: 3px 3px 0 0 rgba(0, 0, 0, .15);
+  --shadow: 4px 4px 0 0 rgba(0, 0, 0, .2);
+  --shadow-lg: 6px 6px 0 0 rgba(0, 0, 0, .2);
+  --shadow-pink: 6px 6px 0 0 rgba(244, 114, 182, .4);
+  --shadow-sky: 6px 6px 0 0 rgba(56, 189, 248, .4);
+  --shadow-focus: 4px 4px 0 0 rgba(56, 189, 248, .5);
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
+  --ease: 200ms ease-out;
+}
+
+*, *::before, *::after { box-sizing: border-box; border-radius: 0; }
+html, body { height: 100%; }
+body { margin: 0; color: var(--text); background: var(--bg); font: 15px/1.7 var(--font-sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: inherit; text-underline-offset: 3px; }
+
+.mono { font-family: var(--font-mono); }
+.label { font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: .06em; }
+.muted { color: var(--muted); }
+
+/* Pressable: hard shadow that collapses as the element shifts into it. */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 0 20px; border: var(--line); background: var(--bg);
+  font-weight: 700; white-space: nowrap; text-decoration: none; box-shadow: var(--shadow);
+  transition: transform var(--ease), box-shadow var(--ease), background var(--ease);
+}
+.btn:hover:not(:disabled) { box-shadow: none; transform: translate(2px, 2px); }
+.btn:active:not(:disabled) { box-shadow: none; transform: translate(3px, 3px); }
+.btn:disabled { cursor: not-allowed; color: var(--placeholder); background: var(--surface); box-shadow: none; }
+.btn-primary { background: var(--pink); }
+.btn-ghost { background: transparent; box-shadow: 4px 4px 0 0 rgba(0, 0, 0, .1); }
+
+.chip {
+  display: inline-flex; align-items: center; min-height: 32px; padding: 0 12px;
+  border: var(--line); background: var(--surface); font-size: 13px; font-weight: 700;
+  white-space: nowrap; box-shadow: var(--shadow-sm);
+  transition: transform var(--ease), box-shadow var(--ease), background var(--ease);
+}
+.chip:hover:not(:disabled) { background: var(--sky-soft); box-shadow: none; transform: translate(2px, 2px); }
+.chip:disabled { cursor: default; color: var(--muted); box-shadow: none; }
+
+.tag { display: inline-block; padding: 0 8px; border: var(--line); font: 700 11px/1.6 var(--font-mono); white-space: nowrap; }
+.tag-pink { background: var(--pink); }
+.tag-lime { background: var(--lime); }
+.tag-sky { background: var(--sky); }
+.tag-amber { background: var(--amber); }
+
+.card { background: var(--surface); border: var(--line); box-shadow: var(--shadow-lg); }
+
+.field {
+  display: block; width: 100%; padding: 11px 13px; border: var(--line);
+  background: var(--bg); color: var(--text); outline: none;
+  transition: box-shadow var(--ease), background var(--ease);
+}
+.field::placeholder { color: var(--placeholder); opacity: 1; }
+.field:focus { background: var(--surface); box-shadow: var(--shadow-focus); }
+
+:where(button, a, input, select, textarea):focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
+  .btn:hover, .btn:active, .chip:hover { transform: none !important; }
+}

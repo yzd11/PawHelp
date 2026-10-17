@@ -19,7 +19,8 @@ http.createServer((req, res) => {
     const relative = req.url === '/' ? 'index.html' : decodeURIComponent(req.url.slice(8).split('?')[0]);
     const file = path.resolve(root, relative);
     if (file.startsWith(root + path.sep) && fs.existsSync(file) && fs.statSync(file).isFile()) {
-      res.writeHead(200, {'content-type': file.endsWith('.js') ? 'text/javascript; charset=utf-8' : 'text/html; charset=utf-8'});
+      const type = file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : 'text/html';
+      res.writeHead(200, {'content-type': `${type}; charset=utf-8`});
       return res.end(fs.readFileSync(file));
     }
   }
@@ -32,6 +33,7 @@ http.createServer((req, res) => {
     return;
   }
   res.setHeader('content-type', 'application/json; charset=utf-8');
+  if (req.url === '/v1/client-storage-migration') return res.end(JSON.stringify({id: 'none', rules: []}));
   if (req.url.startsWith('/v1/conversations/42/messages')) return res.end(JSON.stringify(history));
   if (req.url.startsWith('/v1/conversations/42/pending-')) return res.end(JSON.stringify({pending: false}));
   if (req.url.startsWith('/v1/conversations')) return res.end('[]');

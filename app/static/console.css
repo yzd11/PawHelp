@@ -55,15 +55,5 @@ body.console-page { --ink:#20201e; --paper:#fffef9; --yellow:#ffe66d; --mint:#e5
 .console-page .topic-samples { border:0; border-left:2px solid #d3c9aa; }
 .console-page .topic-subnav a { font-size:12px; font-weight:600; box-shadow:none; padding:7px 12px; }
 .console-page dialog { border:3px solid var(--ink); box-shadow:4px 4px 0 #20201e; }
-.customer-page { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif; }
-.customer-page .app-shell { border-width:3px; box-shadow:5px 5px 0 var(--ink); }
-.customer-page .brand-mark { box-shadow:2px 2px 0 var(--ink); transform:none; }
-.customer-page .brand { font-size:25px; }
-.customer-page .agent-avatar { box-shadow:none; transform:none; }
-.customer-page .sidebar-label { font-size:12px; }
-.customer-page .sidebar-note p { font-size:12px; }
-.customer-page [data-app-navigation].app-nav { border:0; box-shadow:none; padding:0; background:transparent; }
-.customer-page [data-app-navigation].app-nav a { font-weight:500; font-size:12px; text-decoration:underline; text-underline-offset:3px; }
-.customer-page .message { font-size:14px; }
 @media(max-width:1000px) { body.console-page { padding-left:192px; } .console-page .console-sidebar { width:192px; padding:24px 12px; } .console-page main,.console-page .shell { width:calc(100% - 34px); margin-top:18px; } .console-page header,.console-page .topbar { padding:18px; } .console-page section { padding:17px; } }
 @media(max-width:720px) { body.console-page { padding-left:0; } .console-page .console-sidebar { position:relative; inset:auto; width:100%; padding:15px; border-right:0; border-bottom:3px solid var(--ink); overflow:visible; } .console-page .console-brand { font-size:23px; padding:0; } .console-page .console-caption { margin:0 0 13px; } .console-page [data-app-navigation].app-nav { flex-direction:row; flex-wrap:wrap; gap:4px; } .console-page [data-app-navigation].app-nav a { padding:7px 9px; font-size:12px; } .console-page .console-sidebar-bottom { margin:13px 0 0; padding:0; display:flex; justify-content:space-between; gap:10px; } .console-page .console-sidebar-bottom small { border:0; padding:0; } .console-page main,.console-page .shell { width:calc(100% - 28px); margin:17px auto 28px; } .console-page h1 { font-size:23px; } .console-page section { padding:14px; } .console-page .actions,.console-page .topbar-actions { justify-content:flex-start; flex-wrap:wrap; } .console-page .topic-cards { grid-template-columns:repeat(2,minmax(0,1fr)); } .console-page .topic-samples { margin-left:0; } }
