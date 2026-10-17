@@ -1,6 +1,4 @@
 /* Operations pages (review, observability, topics). Shell and tokens come from theme.css + console.css. */
-/* Legacy names still read by observability.css and topics.css. */
-:root { --paper: var(--surface); --mint: var(--sky-soft); --yellow: var(--amber); --red: var(--pink); }
 
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .table-wrap { overflow: auto; }
