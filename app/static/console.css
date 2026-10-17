@@ -67,14 +67,6 @@ body.console-page { margin: 0; padding-left: 248px; background: var(--bg); color
 .console-page dialog { border: var(--line); box-shadow: var(--shadow-pink); }
 
 /* Page hooks kept from the operations pages */
-.console-page .review-card { box-shadow: none; margin: 16px 0; }
-.console-page .review-row { padding: 16px; }
-.console-page .review-copy h3 { font-size: 16px; }
-.console-page .answer-preview { font-size: 13px; color: var(--muted); }
-.console-page .inline-evidence { border-width: 2px; }
-.console-page .review-guidance { border: 2px dashed var(--ink); background: var(--sky-soft); padding: 11px 13px; font-size: 13px; }
-.console-page .original-card { background: var(--bg); border: 2px solid var(--rule); }
-.console-page .evidence-chunk { border: 2px dashed var(--rule); }
 .console-page .topic-cards, .console-page .summary-grid { gap: 16px; }
 .console-page .topic-cards article { padding: 16px; border: var(--line); background: var(--surface); box-shadow: var(--shadow); }
 .console-page .topic-value { font: 700 28px/1.2 var(--font-mono); }
