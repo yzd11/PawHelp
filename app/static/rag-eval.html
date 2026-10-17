@@ -4,186 +4,147 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PawHelp · RAG 质量评估</title>
+  <link rel="stylesheet" href="/static/theme.css">
   <style>
-    :root {
-      --ink: #111;
-      --paper: #fffdf7;
-      --yellow: #ffe66d;
-      --aqua: #55c9c3;
-      --mint: #9be3d6;
-      --red: #ff6b70;
-      --blue: #7ea7ff;
-      --muted: #6b6b66;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      color: var(--ink);
-      background: var(--yellow);
-      font-family: ui-monospace, "Cascadia Mono", "Microsoft YaHei", monospace;
-    }
-    button, select, input { font: inherit; }
-    .shell { width: min(1480px, calc(100% - 32px)); margin: 16px auto 34px; }
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 18px;
-      padding: 18px 22px;
-      border: 5px solid var(--ink);
-      background: var(--paper);
-      box-shadow: 8px 8px 0 var(--ink);
-    }
-    .brand { display: flex; align-items: center; gap: 14px; }
-    .brand-mark {
-      display: grid; place-items: center; width: 54px; height: 54px;
-      border: 4px solid var(--ink); background: var(--red); font-size: 28px;
-      box-shadow: 5px 5px 0 var(--aqua); transform: rotate(-2deg);
-    }
-    h1 { margin: 0; font-size: clamp(22px, 3vw, 36px); line-height: 1; }
-    .subtitle { margin: 7px 0 0; color: var(--muted); font-size: 12px; font-weight: 800; }
-    .actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
-    .page-nav {
-      display: flex; align-items: center; gap: 6px; padding: 5px;
-      border: 3px solid var(--ink); background: white; box-shadow: 4px 4px 0 var(--ink);
-    }
-    .page-nav a {
-      padding: 6px 10px; border: 2px solid transparent; color: var(--ink);
-      font-size: 12px; font-weight: 900; text-decoration: none; white-space: nowrap;
-    }
-    .page-nav a:hover { border-color: var(--ink); background: var(--aqua); }
-    .page-nav a[aria-current="page"] { border-color: var(--ink); background: var(--yellow); }
-    .button, .link-button {
-      border: 4px solid var(--ink); padding: 9px 13px; color: var(--ink);
-      background: var(--paper); box-shadow: 4px 4px 0 var(--ink);
-      text-decoration: none; font-weight: 900; cursor: pointer;
-    }
-    .button { background: var(--red); }
-    .button:hover:not(:disabled), .link-button:hover { transform: translate(4px, 4px); box-shadow: none; background: var(--aqua); }
-    .button:disabled { cursor: wait; opacity: .65; }
-    .notice {
-      margin: 20px 0; padding: 13px 16px; border: 4px solid var(--ink);
-      background: var(--mint); box-shadow: 5px 5px 0 var(--ink); font-weight: 800;
-    }
-    .notice.error { background: var(--red); }
-    .run-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 20px 0; }
-    .run-card { padding: 13px; border: 4px solid var(--ink); background: var(--paper); box-shadow: 4px 4px 0 var(--ink); }
-    .run-card span { display: block; color: var(--muted); font-size: 10px; font-weight: 900; }
-    .run-card strong { display: block; margin-top: 7px; overflow-wrap: anywhere; white-space: pre-line; font-size: 16px; }
-    .run-card small { display: block; margin-top: 8px; color: var(--muted); font-size: 11px; font-weight: 700; line-height: 1.5; }
-    .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 20px 0; }
-    .metric {
-      min-width: 0; padding: 18px; border: 4px solid var(--ink);
-      background: var(--paper); box-shadow: 6px 6px 0 var(--ink);
-    }
-    .metric:nth-child(2) { background: var(--red); }
-    .metric:nth-child(3) { background: var(--mint); }
-    .metric-name { font-size: 12px; font-weight: 900; text-transform: uppercase; }
-    .metric-value { display: block; margin-top: 12px; font-size: clamp(28px, 4vw, 45px); font-weight: 1000; }
-    .metric-hint { display: block; margin-top: 9px; font-size: 12px; font-weight: 800; }
-    .panel {
-      margin-top: 20px; padding: 20px; border: 5px solid var(--ink);
-      background: var(--paper); box-shadow: 8px 8px 0 var(--ink);
-    }
-    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
-    h2 { margin: 0; font-size: 20px; }
-    .strategy-row { display: grid; grid-template-columns: 150px 1fr 58px; align-items: center; gap: 12px; margin: 12px 0; }
-    .strategy-name { font-weight: 900; }
-    .bar { height: 24px; border: 3px solid var(--ink); background: #eee; }
-    .bar > i { display: block; height: 100%; background: var(--aqua); border-right: 3px solid var(--ink); }
-    .strategy-row:nth-child(2n) .bar > i { background: var(--yellow); }
-    .bar-value { font-weight: 900; text-align: right; }
-    .metric-tabs { display: flex; flex-wrap: wrap; gap: 0; }
-    .metric-tab { min-height: 36px; padding: 6px 13px; border: 3px solid var(--ink); background: white; box-shadow: none; font-weight: 900; cursor: pointer; }
-    .metric-tab.active { background: #ff9a56; }
-    .run-option { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 900; }
-    .run-option input { width: 18px; height: 18px; accent-color: #ff9a56; }
-    .bucket-chart { display: grid; grid-template-columns: repeat(5, minmax(120px, 1fr)); gap: 18px; align-items: end; min-height: 390px; padding: 30px 12px 0; border-bottom: 4px solid var(--ink); }
+    /* RAG evaluation page. Shell and tokens come from theme.css + console.css. */
+    :root { --s-dense: var(--sky); --s-bm25: var(--lime); --s-hybrid: var(--amber); --s-rerank: var(--pink); }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 14px; }
+    .run-option { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; }
+    .console-page .run-option input { width: 18px; height: 18px; margin: 0; }
+    .console-page .button { min-height: 44px; padding: 0 20px; box-shadow: var(--shadow); }
+    .console-page .button:disabled { cursor: wait; }
+
+    .console-page .notice { margin: 0 0 28px; }
+    .console-page .notice.error { border-style: solid; background: var(--pink-soft); color: var(--danger); font-weight: 700; }
+
+    /* Overview cards sit directly on the page background. */
+    .console-page .run-grid, .console-page .metrics { padding: 0; border: 0; background: transparent; box-shadow: none; }
+    .run-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+    .run-card { min-width: 0; padding: 14px 16px; border: var(--line); background: var(--surface); box-shadow: var(--shadow-sm); }
+    .run-card span { display: block; color: var(--muted); font: 700 11px/1.5 var(--font-mono); letter-spacing: .05em; }
+    .run-card strong { display: block; margin-top: 6px; overflow-wrap: anywhere; white-space: pre-line; font-size: 15px; }
+    .run-card small { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+    .metric { min-width: 0; padding: 20px 22px; border: var(--line); background: var(--surface); box-shadow: var(--shadow-lg); transition: transform var(--ease), box-shadow var(--ease); }
+    .metric:hover { transform: translate(-2px, -2px); box-shadow: var(--shadow-pink); }
+    .metric:nth-child(1) { background: var(--pink-soft); }
+    .metric:nth-child(2) { background: var(--amber-soft); }
+    .metric:nth-child(3) { background: var(--lime-soft); }
+    .metric-name { font: 700 12px/1.5 var(--font-mono); letter-spacing: .04em; }
+    .metric-value { display: block; margin: 12px 0 8px; font: 700 clamp(30px, 3.4vw, 42px)/1 var(--font-mono); letter-spacing: -.03em; }
+    .metric-hint { display: block; color: var(--muted); font-size: 13px; }
+
+    .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .panel-head h2 { margin: 0; }
+    .metric-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+    .console-page .metric-tab { min-height: 36px; margin: 0; padding: 0 14px; font-size: 13px; }
+    .console-page .metric-tab.active { background: var(--sky); box-shadow: none; transform: translate(2px, 2px); }
+    .metric-help { margin: 0 0 16px; padding: 10px 14px; border-left: 4px solid var(--sky); background: var(--sky-soft); font-size: 13px; line-height: 1.65; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 8px; font-size: 13px; font-weight: 700; }
+    .legend i { display: inline-block; width: 14px; height: 14px; margin-right: 6px; border: 2px solid var(--ink); vertical-align: -2px; }
+    .bucket-chart { display: grid; grid-template-columns: repeat(6, minmax(110px, 1fr)); gap: 16px; align-items: end; min-height: 380px; padding: 30px 8px 0; border-bottom: var(--line); }
     .bucket-chart[hidden] { display: none; }
     .bucket-group { display: grid; grid-template-rows: 300px auto; gap: 10px; min-width: 0; }
     .bucket-bars { display: flex; align-items: end; justify-content: center; gap: 4px; height: 300px; }
-    .bucket-bar { position: relative; width: min(36px, 22%); min-height: 3px; border: 3px solid var(--ink); border-bottom: 0; }
-    .bucket-bar:nth-child(1) { background: #78bee4; }
-    .bucket-bar:nth-child(2) { background: #58cd69; }
-    .bucket-bar:nth-child(3) { background: #f97896; }
-    .bucket-bar:nth-child(4) { background: #ff9a56; }
-    .bucket-bar b { position: absolute; left: 50%; top: -22px; transform: translateX(-50%); font-size: 11px; }
-    .bucket-label { text-align: center; font-weight: 1000; }
-    .bucket-label small { display: block; margin-top: 4px; color: var(--muted); }
-    .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 8px; font-size: 11px; font-weight: 900; }
-    .legend i { display: inline-block; width: 12px; height: 12px; margin-right: 5px; border: 2px solid var(--ink); vertical-align: -2px; }
-    .reading { margin-top: 18px; padding: 12px; border: 3px dashed var(--ink); background: #fff7e8; font-weight: 800; }
-    .metric-help { margin: 0 0 16px; padding: 11px 13px; border: 3px dashed var(--ink); background: #fff7e8; font-size: 12px; font-weight: 800; line-height: 1.6; }
-    .breakdown-title { margin: 18px 0 8px; font-size: 14px; }
+    .bucket-bar { position: relative; width: min(30px, 22%); min-height: 3px; border: var(--line); border-bottom: 0; }
+    .bucket-bar:nth-child(1) { background: var(--s-dense); }
+    .bucket-bar:nth-child(2) { background: var(--s-bm25); }
+    .bucket-bar:nth-child(3) { background: var(--s-hybrid); }
+    .bucket-bar:nth-child(4) { background: var(--s-rerank); }
+    .bucket-bar b { position: absolute; left: 50%; top: -20px; transform: translateX(-50%); font: 700 11px/1 var(--font-mono); }
+    .bucket-label { padding-bottom: 10px; text-align: center; font-weight: 800; }
+    .bucket-label small { display: block; margin-top: 2px; color: var(--muted); font: 400 11px/1.5 var(--font-mono); }
+    .reading { margin-top: 18px; padding: 10px 14px; border: 2px dashed var(--ink); background: var(--bg); font-size: 13px; }
+
+    .breakdown-title { margin: 18px 0 8px; font-size: 15px; }
     .production-breakdown[hidden] { display: none; }
-    .faith-row { display: grid; grid-template-columns: 150px 1fr 48px; align-items: center; gap: 10px; margin: 14px 0; font-weight: 900; }
-    .faith-track { height: 18px; border: 3px solid var(--ink); background: white; }
-    .faith-track i { display: block; height: 100%; background: #58cd69; }
-    .faith-track i.answer-coverage { background: #ff9a56; }
-    .issue-list { display: grid; gap: 12px; }
+    .faith-row { display: grid; grid-template-columns: 200px 1fr 52px; align-items: center; gap: 12px; margin: 12px 0; font-weight: 700; }
+    .faith-row > span:last-child { font-family: var(--font-mono); text-align: right; }
+    .faith-track { height: 20px; border: var(--line); background: var(--bg); }
+    .faith-track i { display: block; height: 100%; background: var(--lime); border-right: var(--line); }
+    .faith-track i.answer-coverage { background: var(--s-rerank); }
+
     .issue-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: -4px 0 16px; }
-    .issue-filter { padding: 7px 10px; border: 3px solid var(--ink); background: white; font-weight: 900; cursor: pointer; }
-    .issue-filter.active { background: #ff9a56; }
-    .issue { border: 3px solid var(--ink); background: #fff7e8; }
-    .issue summary { display: flex; align-items: center; gap: 10px; padding: 14px; cursor: pointer; font-weight: 1000; list-style: none; }
+    .console-page .issue-filter { margin: 0; min-height: 34px; padding: 0 12px; font-size: 13px; }
+    .console-page .issue-filter.active { background: var(--sky); box-shadow: none; transform: translate(2px, 2px); }
+    .issue-list { display: grid; gap: 12px; }
+    .console-page .issue { padding: 0; border: var(--line); background: var(--surface); box-shadow: var(--shadow-sm); }
+    .issue summary { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 14px; font-weight: 700; list-style: none; }
     .issue summary::-webkit-details-marker { display: none; }
-    .issue summary::before { content: "+"; display: grid; place-items: center; width: 23px; height: 23px; flex: 0 0 auto; border: 3px solid var(--ink); background: white; }
-    .issue[open] summary::before { content: "−"; background: var(--yellow); }
-    .issue-title { flex: 1; }
-    .issue-body { padding: 0 14px 14px 47px; }
-    .issue p { margin: 7px 0; line-height: 1.55; font-size: 12px; }
+    .issue summary::before { content: "+"; display: grid; place-items: center; width: 24px; height: 24px; flex: 0 0 auto; border: var(--line); background: var(--surface); font-family: var(--font-mono); }
+    .issue[open] summary { border-bottom: 2px solid var(--rule); }
+    .issue[open] summary::before { content: "−"; background: var(--amber); }
+    .issue-title { flex: 1; min-width: 200px; }
+    .issue-body { padding: 4px 14px 14px 48px; }
+    .issue p { margin: 8px 0; line-height: 1.6; font-size: 13px; }
     .issue-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
-    .review-note { margin: 0 0 12px; color: var(--muted); font-size: 12px; font-weight: 900; }
-    .review-box { margin-top: 12px; padding: 12px; border: 3px solid var(--ink); background: white; }
-    .review-box p { margin: 0 0 9px; }
-    .review-reason { display: block; width: 100%; min-height: 72px; padding: 8px; border: 3px solid var(--ink); resize: vertical; font: inherit; }
-    .review-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-    .review-feedback { color: #b42318; font-weight: 900; }
-    .mini-button { padding: 6px 9px; border: 3px solid var(--ink); background: var(--yellow); font-weight: 900; cursor: pointer; }
-    .mini-button:hover { background: var(--aqua); }
+    .review-note { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+    .review-box { margin-top: 12px; padding: 12px 14px; border: 2px dashed var(--ink); background: var(--bg); }
+    .review-box p { margin: 0 0 8px; }
+    .console-page .review-reason { display: block; width: 100%; min-height: 76px; margin-top: 6px; resize: vertical; }
+    .review-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .review-feedback { color: var(--danger); font-weight: 700; }
+    .console-page .mini-button { min-height: 34px; padding: 0 12px; font-size: 13px; background: var(--sky-soft); }
     .issue-pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
-    .page-status { color: var(--muted); font-size: 12px; font-weight: 900; }
+    .page-status { color: var(--muted); font: 400 12px/1.5 var(--font-mono); }
     .page-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
-    .page-button { min-width: 38px; padding: 7px 9px; border: 3px solid var(--ink); background: white; font-weight: 900; cursor: pointer; }
-    .page-button:hover:not(:disabled) { background: var(--aqua); }
-    .page-button.active { background: var(--yellow); }
-    .page-button:disabled { cursor: not-allowed; opacity: .4; }
-    .matrix-wrap { overflow-x: auto; padding-bottom: 8px; }
-    table { width: 100%; min-width: 760px; border-collapse: collapse; }
-    th, td { padding: 11px; border: 3px solid var(--ink); text-align: left; }
-    th { background: var(--yellow); }
-    td { font-weight: 800; }
-    tr.best-row td { background: #e7ffe7; }
-    .table-number { text-align: right; font-variant-numeric: tabular-nums; }
-    .case-picker { max-width: min(720px, 100%); padding: 9px; border: 4px solid var(--ink); background: var(--yellow); font-weight: 900; }
+    .console-page .page-button { min-width: 38px; min-height: 34px; margin: 0; padding: 0 10px; font-family: var(--font-mono); font-size: 13px; }
+    .console-page .page-button.active { background: var(--ink); color: #fff; box-shadow: none; }
+
+    .matrix-wrap { overflow-x: auto; border: var(--line); }
+    .matrix-wrap table { width: 100%; min-width: 1080px; }
+    .matrix-wrap th { text-align: right; white-space: normal; vertical-align: bottom; }
+    .matrix-wrap th:first-child, .matrix-wrap td:first-child { text-align: left; font-weight: 700; white-space: nowrap; }
+    .matrix-wrap tbody tr:hover td { background: var(--sky-soft); }
+    .matrix-wrap tbody tr:last-child td { border-bottom: 0; }
+    .matrix-wrap tr.best-row td { background: var(--lime-soft); font-weight: 700; }
+    .table-number { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+    .console-page .case-picker { max-width: min(560px, 100%); font-weight: 700; }
     .case-meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
-    .chip { padding: 5px 8px; border: 3px solid var(--ink); background: var(--mint); font-size: 11px; font-weight: 900; }
-    .chip.bad { background: var(--red); }
-    .strategy-grid { display: grid; grid-template-columns: repeat(4, minmax(250px, 1fr)); gap: 14px; }
-    .strategy-card { min-width: 0; border: 4px solid var(--ink); background: #fff; box-shadow: 5px 5px 0 var(--aqua); }
-    .strategy-card h3 { margin: 0; padding: 10px; border-bottom: 4px solid var(--ink); background: var(--yellow); font-size: 14px; }
+    .console-page .chip { min-height: 0; padding: 2px 10px; background: var(--lime-soft); box-shadow: none; font: 700 12px/1.6 var(--font-mono); white-space: normal; }
+    .console-page .chip.bad { background: var(--pink); }
+    .strategy-grid { display: grid; grid-template-columns: repeat(4, minmax(240px, 1fr)); gap: 16px; }
+    .strategy-card { min-width: 0; border: var(--line); background: var(--surface); box-shadow: var(--shadow); }
+    .strategy-card h3 { margin: 0; padding: 10px 12px; border-bottom: var(--line); font-size: 14px; }
+    .strategy-card:nth-child(1) h3 { background: var(--sky-soft); }
+    .strategy-card:nth-child(2) h3 { background: var(--lime-soft); }
+    .strategy-card:nth-child(3) h3 { background: var(--amber-soft); }
+    .strategy-card:nth-child(4) h3 { background: var(--pink-soft); }
     .card-body { padding: 12px; }
-    .coverage { display: grid; gap: 4px; margin-bottom: 12px; font-size: 11px; font-weight: 800; }
-    .coverage span { padding: 4px 6px; background: #f6f3eb; }
+    .coverage { display: grid; gap: 4px; margin-bottom: 12px; font-size: 12px; }
+    .coverage span { padding: 4px 8px; background: var(--bg); }
     .ranking { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-    .evidence { padding: 9px; border: 3px solid var(--ink); background: var(--paper); }
-    .evidence.hit { background: var(--mint); }
-    .evidence-rank { font-size: 10px; font-weight: 1000; }
-    .evidence-title { display: block; margin: 4px 0; font-size: 12px; font-weight: 900; }
-    .evidence-path { color: var(--muted); font-size: 10px; overflow-wrap: anywhere; }
-    .evidence-answer { margin: 9px 0 0; padding-top: 9px; border-top: 1px solid var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; font-size: 12px; }
+    .evidence { padding: 10px; border: 2px solid var(--rule); background: var(--surface); }
+    .evidence.hit { border-color: var(--ink); background: var(--lime-soft); }
+    .evidence-rank { font: 700 11px/1.5 var(--font-mono); }
+    .evidence-title { display: block; margin: 4px 0; font-size: 13px; font-weight: 700; }
+    .evidence-path { color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
+    .evidence-answer { margin: 8px 0 0; padding-top: 8px; border-top: 2px solid var(--rule); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; font-size: 12px; }
     .evidence-answer strong { display: block; margin-bottom: 4px; }
-    .answer { margin-top: 12px; padding: 10px; border: 3px solid var(--ink); background: #f6f3eb; white-space: pre-wrap; line-height: 1.55; font-size: 12px; }
-    .rerun-panel { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
-    .rerun-panel p { margin: 7px 0 0; color: var(--muted); font-size: 12px; font-weight: 800; }
-    .empty { padding: 30px; text-align: center; font-weight: 900; }
-    @media (max-width: 1100px) { .strategy-grid { grid-template-columns: repeat(2, 1fr); } .run-grid { grid-template-columns: repeat(2, 1fr); } .bucket-chart { overflow-x: auto; } }
+    .answer { margin-top: 12px; padding: 10px 12px; border: var(--line); background: var(--bg); white-space: pre-wrap; line-height: 1.6; font-size: 13px; }
+
+    .console-page .rerun-panel { display: flex; align-items: center; justify-content: space-between; gap: 20px; background: var(--amber-soft); }
+    .rerun-panel h2 { margin: 0; }
+    .rerun-panel p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+    .empty { padding: 28px; color: var(--muted); text-align: center; font-weight: 700; }
+
+    .console-page .empty-state { box-shadow: var(--shadow-pink); }
+    .empty-state h2 { margin: 0 0 8px; }
+    .empty-state p { margin: 0 0 12px; color: var(--muted); }
+    .empty-state code { display: inline-block; padding: 6px 10px; border: var(--line); background: var(--bg); font: 13px/1.5 var(--font-mono); overflow-wrap: anywhere; }
+    .empty-state[hidden], body.report-missing .report-only { display: none; }
+
+    @media (max-width: 1100px) {
+      .strategy-grid, .run-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .bucket-chart { overflow-x: auto; }
+    }
     @media (max-width: 760px) {
-      .shell { width: calc(100% - 18px); margin-top: 9px; }
-      .topbar, .panel-head, .rerun-panel { align-items: flex-start; flex-direction: column; }
-      .actions { justify-content: flex-start; }
+      .panel-head, .console-page .rerun-panel { align-items: flex-start; flex-direction: column; }
       .metrics, .strategy-grid, .run-grid { grid-template-columns: 1fr; }
-      .strategy-row { grid-template-columns: 110px 1fr 52px; }
+      .faith-row { grid-template-columns: 120px 1fr 48px; }
+      .issue-body { padding-left: 14px; }
     }
   </style>
   <link rel="stylesheet" href="/static/navigation.css">
@@ -193,11 +154,8 @@
   <main class="shell">
     <header class="topbar">
       <div class="brand">
-        <div class="brand-mark" aria-hidden="true">📊</div>
-        <div>
-          <h1>RAG 质量评估</h1>
-          <p class="subtitle">四策略检索对照 · 召回材料字面命中 · 最终答案模型评估</p>
-        </div>
+        <h1>RAG 质量评估</h1>
+        <p class="subtitle">四策略检索对照 · 召回材料字面命中 · 最终答案模型评估</p>
       </div>
       <nav class="actions" aria-label="页面操作">
         <span class="page-nav" aria-label="全局页面导航" data-app-navigation>
@@ -212,13 +170,19 @@
 
     <div class="notice" id="status">正在读取评估报告…</div>
 
-    <section class="run-grid" id="runMeta" aria-label="评测运行信息"></section>
+    <section class="panel empty-state" id="emptyState" hidden>
+      <h2>还没有评估报告</h2>
+      <p>可以点击右上角“重新运行评估”，或在命令行生成报告后刷新本页：</p>
+      <code>uv run python -m scripts.run_retrieval_evals</code>
+    </section>
 
-    <section class="metrics" id="metrics" aria-label="生产策略指标"></section>
+    <section class="run-grid report-only" id="runMeta" aria-label="评测运行信息"></section>
 
-    <section class="panel">
+    <section class="metrics report-only" id="metrics" aria-label="生产策略指标"></section>
+
+    <section class="panel report-only">
       <div class="panel-head">
-        <div><h2>检索质量（确定性）</h2><p class="subtitle">四策略、四个可回答桶与总体对比</p></div>
+        <div><h2>检索质量（确定性）</h2><p class="subtitle">四策略在各可回答题型与总体上的对比</p></div>
         <div class="metric-tabs" id="metricTabs">
           <button class="metric-tab active" data-metric="mrr" type="button">MRR</button>
           <button class="metric-tab" data-metric="recall_at_k" type="button">Recall@5</button>
@@ -231,7 +195,7 @@
       <div class="reading" id="retrievalReading"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel report-only">
       <div class="panel-head">
         <div><h2>生成质量（端到端）</h2><p class="subtitle">最终答案要点是否答全，与回答事实是否有引用依据；库外拒答见顶部总览</p></div>
         <div class="metric-tabs" id="generationTabs">
@@ -248,7 +212,7 @@
       </div>
     </section>
 
-    <section class="panel">
+    <section class="panel report-only">
       <div class="panel-head">
         <div><h2>需人工复核的问题（仅混合 + Rerank）</h2><p class="subtitle">四类标签可重叠，因此筛选数之和可能大于题数；只有“回答事实无依据”支持人工处置，原始模型分数不变</p></div>
         <span class="chip" id="issueCount">0 条</span>
@@ -259,7 +223,7 @@
       <nav class="issue-pagination" id="issuePagination" aria-label="问题分页"></nav>
     </section>
 
-    <section class="panel">
+    <section class="panel report-only">
       <div class="panel-head">
         <div><h2>完整数据（同一轮评估汇总）</h2><p class="subtitle">这张表供核对上方图表，并非另一轮结果；“—”表示未评测，不等于 0 分。除 MRR 外，数值按比例显示。</p></div>
         <span class="chip">策略汇总</span>
@@ -268,7 +232,7 @@
         <table aria-label="四策略完整评估数据">
           <thead>
             <tr>
-              <th>策略</th><th>政策 MRR</th><th>型号 MRR</th><th>口语 MRR</th><th>多要点组合 MRR</th>
+              <th>策略</th><th>政策 MRR</th><th>型号 MRR</th><th>口语 MRR</th><th>多要点组合 MRR</th><th>标识符 MRR</th>
               <th>总体 MRR</th><th>Recall@5</th><th>召回材料要点命中（字面）</th><th>最终答案要点覆盖（模型）</th><th>回答事实有据（模型，仅重排路线）</th><th>库外正确拒答率</th><th>库内误拒答率</th>
             </tr>
           </thead>
@@ -278,7 +242,7 @@
       <div class="reading" id="tableReading"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel report-only">
       <div class="panel-head">
         <div><h2>逐题证据审计</h2><p class="subtitle">同一题的四路线明细：检索材料按字面命中计分，最终答案由模型判断；事实依据仅核查混合 + Rerank</p></div>
         <select class="case-picker" id="casePicker" aria-label="选择评估问题"></select>
@@ -290,7 +254,7 @@
     <section class="panel rerun-panel">
       <div>
         <h2>重新生成评估报告</h2>
-        <p>运行 300 道题 × 4 条检索路线；默认四路线生成并评估答案覆盖度，取消勾选可只生成混合 + Rerank 答案以节省模型调用。</p>
+        <p id="rerunCopy">运行全部评测题 × 4 条检索路线；默认四路线生成并评估答案覆盖度，取消勾选可只生成混合 + Rerank 答案以节省模型调用。</p>
       </div>
       <button class="button rerun-trigger" type="button">重新运行评估</button>
     </section>
@@ -309,9 +273,14 @@
       ["B_model", "型号类"],
       ["C_colloquial", "口语类"],
       ["E_multi", "多要点组合"],
+      ["F_identifier", "标识符"],
       ["overall", "总体"],
     ];
+    const ANSWERABLE_BUCKETS = BUCKETS.filter(([bucket]) => bucket !== "overall");
+    const STRATEGY_COLORS = ["var(--s-dense)", "var(--s-bm25)", "var(--s-hybrid)", "var(--s-rerank)"];
     const statusBox = document.querySelector("#status");
+    const emptyState = document.querySelector("#emptyState");
+    const rerunCopy = document.querySelector("#rerunCopy");
     const runMeta = document.querySelector("#runMeta");
     const metrics = document.querySelector("#metrics");
     const strategyLegend = document.querySelector("#strategyLegend");
@@ -338,6 +307,7 @@
     const rerunButton = document.querySelector("#rerunButton");
     const rerunButtons = [rerunButton, ...document.querySelectorAll(".rerun-trigger")];
     let report = null;
+    let counts = null;
     let selectedMetric = "mrr";
     let selectedGenerationMetric = "answer_coverage";
     let selectedIssueFilter = "all";
@@ -363,6 +333,33 @@
       answer_coverage: "评估对象：模型生成的最终答案，不是召回材料。裁判模型逐个判断标准要点是否被回答覆盖；每题为覆盖要点数 ÷ 标准要点数，再对成功评分的可回答题求平均。失败或未运行的题不计入分母。",
       faithfulness: "评估对象：混合 + Rerank 的最终答案。裁判模型核查回答中的事实是否得到本次引用知识块支持，再对成功核查的可回答题求平均；明确拒答按规则记 1。其他三路线未执行此核查。“没答全”与“编造”是不同问题。",
     };
+
+    // Question counts come from the report itself, so copy stays right when the dataset grows.
+    function caseCounts() {
+      if (counts) return counts;
+      const bucketOf = new Map();
+      const answerableIds = new Set();
+      const refusalIds = new Set();
+      for (const row of report?.cases || []) {
+        bucketOf.set(row.case_id, row.query_type);
+        (row.expected_answerable === false ? refusalIds : answerableIds).add(row.case_id);
+      }
+      const byBucket = {};
+      for (const bucket of bucketOf.values()) byBucket[bucket] = (byBucket[bucket] || 0) + 1;
+      const dataset = report?.dataset || {};
+      const answerable = dataset.answerable_cases ?? answerableIds.size;
+      const refusal = dataset.refusal_cases ?? refusalIds.size;
+      byBucket.overall = answerable;
+      counts = { byBucket, answerable, refusal, total: dataset.total_cases ?? answerable + refusal };
+      return counts;
+    }
+
+    function bucketCaption(bucket, label) {
+      const caption = element("div", "bucket-label", label);
+      const total = caseCounts().byBucket[bucket];
+      caption.appendChild(element("small", "", total ? `${bucket} · ${total} 题` : bucket));
+      return caption;
+    }
 
     function scoredMetric(strategy, bucket, metric) {
       const values = bucket === "overall"
@@ -443,15 +440,13 @@
           bar.appendChild(element("b", "", value == null ? "—" : value.toFixed(2)));
           bars.appendChild(bar);
         }
-        const caption = element("div", "bucket-label", label);
-        caption.appendChild(element("small", "", bucket));
-        group.append(bars, caption);
+        group.append(bars, bucketCaption(bucket, label));
         return group;
       }));
       const ranked = STRATEGIES.filter((strategy) => scoredMetric(strategy, "overall", selectedMetric) != null)
         .sort((left, right) => scoredMetric(right, "overall", selectedMetric) - scoredMetric(left, "overall", selectedMetric));
       retrievalReading.textContent = ranked.length
-        ? `读图：${STRATEGY_LABELS[ranked[0]]} 的总体${METRIC_NAMES[selectedMetric]}最高。政策、型号、口语、多要点组合每桶各有 60 道可回答题；总体按全部 240 道可回答题计算，不含 60 道库外题。`
+        ? `读图：${STRATEGY_LABELS[ranked[0]]} 的总体${METRIC_NAMES[selectedMetric]}最高。各题型柱下标注题数；总体按全部 ${caseCounts().answerable} 道可回答题计算，不含 ${caseCounts().refusal} 道库外题。`
         : "本轮未记录这个指标；空值不代表 0 分。";
       document.querySelectorAll(".metric-tab").forEach((button) => {
         button.classList.toggle("active", button.dataset.metric === selectedMetric);
@@ -470,7 +465,7 @@
         generationLegend.replaceChildren(...STRATEGIES.map((strategy, index) => {
           const item = element("span", "");
           const swatch = element("i", "");
-          swatch.style.background = ["#78bee4", "#58cd69", "#f97896", "#ff9a56"][index];
+          swatch.style.background = STRATEGY_COLORS[index];
           item.append(swatch, document.createTextNode(STRATEGY_LABELS[strategy]));
           return item;
         }));
@@ -503,14 +498,12 @@
             bar.appendChild(element("b", "", value == null ? "—" : value.toFixed(2)));
             bars.appendChild(bar);
           }
-          const caption = element("div", "bucket-label", label);
-          caption.appendChild(element("small", "", bucket));
-          group.append(bars, caption);
+          group.append(bars, bucketCaption(bucket, label));
           return group;
         }));
       }
-      productionBreakdownTitle.textContent = `混合 + Rerank · ${METRIC_NAMES[selectedGenerationMetric]}（每类 60 道可回答题）`;
-      faithBars.replaceChildren(...BUCKETS.slice(0, 4).map(([bucket, label]) => {
+      productionBreakdownTitle.textContent = `混合 + Rerank · ${METRIC_NAMES[selectedGenerationMetric]}`;
+      faithBars.replaceChildren(...ANSWERABLE_BUCKETS.map(([bucket, label]) => {
         const value = scoredMetric("hybrid_rerank", bucket, selectedGenerationMetric);
         const row = element("div", "faith-row");
         const track = element("div", "faith-track");
@@ -518,7 +511,7 @@
         if (selectedGenerationMetric === "answer_coverage") fill.className = "answer-coverage";
         fill.style.width = value == null ? "0%" : percent(value);
         track.appendChild(fill);
-        row.append(element("span", "", label), track, element("span", "", value == null ? "—" : value.toFixed(2)));
+        row.append(element("span", "", `${label}（${caseCounts().byBucket[bucket] || 0} 题）`), track, element("span", "", value == null ? "—" : value.toFixed(2)));
         return row;
       }));
       document.querySelectorAll("[data-generation-metric]").forEach((button) => {
@@ -674,6 +667,7 @@
           metricCell(scoredMetric(strategy, "B_model", "mrr")),
           metricCell(scoredMetric(strategy, "C_colloquial", "mrr")),
           metricCell(scoredMetric(strategy, "E_multi", "mrr")),
+          metricCell(scoredMetric(strategy, "F_identifier", "mrr")),
           metricCell(values.mrr),
           metricCell(values.recall_at_k),
           metricCell(values.evidence_coverage),
@@ -684,10 +678,10 @@
         );
         return row;
       }));
-      const productionBuckets = BUCKETS.slice(0, 4).map(([bucket, label]) => [label, scoredMetric("hybrid_rerank", bucket, "mrr")])
+      const productionBuckets = ANSWERABLE_BUCKETS.map(([bucket, label]) => [label, scoredMetric("hybrid_rerank", bucket, "mrr")])
         .filter(([, value]) => value != null);
       const lowest = productionBuckets.sort((left, right) => left[1] - right[1])[0];
-      tableReading.textContent = `绿色行仅标记总体 MRR 最高路线，不代表所有指标都最好。${lowest ? `混合 + Rerank 最弱检索分桶为${lowest[0]}（MRR ${lowest[1].toFixed(3)}）。` : "本轮没有可比较的检索分桶。"}召回材料与最终答案是两个不同评估对象；库外正确拒答率分母是 60 道库外题，库内误拒答率分母是 240 道可回答题。`;
+      tableReading.textContent = `绿色行仅标记总体 MRR 最高路线，不代表所有指标都最好。${lowest ? `混合 + Rerank 最弱检索分桶为${lowest[0]}（MRR ${lowest[1].toFixed(3)}）。` : "本轮没有可比较的检索分桶。"}召回材料与最终答案是两个不同评估对象；库外正确拒答率分母是 ${caseCounts().refusal} 道库外题，库内误拒答率分母是 ${caseCounts().answerable} 道可回答题。`;
     }
 
     function renderSummary() {
@@ -724,9 +718,8 @@
 
       strategyLegend.replaceChildren(...STRATEGIES.map((strategy, index) => {
         const item = element("span", "");
-        const color = ["#78bee4", "#58cd69", "#f97896", "#ff9a56"][index];
         const swatch = element("i", "");
-        swatch.style.background = color;
+        swatch.style.background = STRATEGY_COLORS[index];
         item.append(swatch, document.createTextNode(STRATEGY_LABELS[strategy]));
         return item;
       }));
@@ -822,6 +815,10 @@
 
     function renderReport(payload) {
       report = payload;
+      counts = null;
+      document.body.classList.remove("report-missing");
+      emptyState.hidden = true;
+      rerunCopy.textContent = `运行 ${caseCounts().total} 道题 × 4 条检索路线；默认四路线生成并评估答案覆盖度，取消勾选可只生成混合 + Rerank 答案以节省模型调用。`;
       faithReviews = new Map();
       reviewLoadError = "正在读取人工复核记录…";
       renderMeta();
@@ -851,6 +848,12 @@
 
     async function loadReport() {
       const response = await fetch("/v1/rag-eval/report", { cache: "no-store" });
+      if (response.status === 404) {
+        document.body.classList.add("report-missing");
+        emptyState.hidden = false;
+        setStatus("尚未生成评估报告。");
+        return;
+      }
       if (!response.ok) throw new Error(`读取报告失败（${response.status}）`);
       renderReport(await response.json());
       await loadFaithReviews();
@@ -948,9 +951,10 @@
     async function rerunEvaluation() {
       const runFullGeneration = fullGeneration.checked;
       const generationMode = runFullGeneration ? "四条路线均生成和裁判答案，模型调用显著增加" : "仅对混合重排路线生成和裁判答案";
-      if (!window.confirm(`将对 300 题运行四种检索策略，${generationMode}。确定继续吗？`)) return;
+      const scope = report ? `${caseCounts().total} 题` : "全部评测题";
+      if (!window.confirm(`将对${scope}运行四种检索策略，${generationMode}。确定继续吗？`)) return;
       rerunButtons.forEach((button) => { button.disabled = true; button.textContent = "评估运行中…"; });
-      setStatus(`正在运行 300 题评测：四策略检索 + ${generationMode}。请保持页面打开。`, false);
+      setStatus(`正在运行${scope}评测：四策略检索 + ${generationMode}。请保持页面打开。`, false);
       try {
         const response = await fetch("/v1/rag-eval/run", {
           method: "POST",
