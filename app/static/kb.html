@@ -6,291 +6,104 @@
   <title>PawHelp 知识库工作台</title>
   <link rel="stylesheet" href="/static/theme.css">
   <style>
-    :root {
-      --ink: #101010;
-      --paper: #fffdf5;
-      --yellow: #ffe66d;
-      --coral: #ff6b6b;
-      --mint: #55cec7;
-      --blue: #9ac5ff;
-      --green: #a8e6a3;
-      --muted: #6d6d68;
-      --line: 4px solid var(--ink);
-      --shadow: 8px 8px 0 var(--ink);
-      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-width: 320px;
-      min-height: 100vh;
-      overflow-y: auto;
-      color: var(--ink);
-      background:
-        linear-gradient(135deg, transparent 24px, rgba(16,16,16,.06) 25px, transparent 26px) 0 0 / 48px 48px,
-        var(--yellow);
-    }
-
-    button, input, textarea, select { font: inherit; }
-    button, a { -webkit-tap-highlight-color: transparent; }
-
-    .shell {
-      width: min(1480px, calc(100% - 32px));
-      margin: 22px auto 46px;
-    }
-
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      padding: 22px 26px;
-      border: var(--line);
-      background: var(--paper);
-      box-shadow: var(--shadow);
-    }
-
-    .header-actions { display: flex; align-items: center; gap: 12px; }
-    .page-nav {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 5px;
-      border: 3px solid var(--ink);
-      background: white;
-      box-shadow: 4px 4px 0 var(--ink);
-    }
-    .page-nav a {
-      padding: 6px 10px;
-      border: 2px solid transparent;
-      color: var(--ink);
-      font-size: 12px;
-      font-weight: 900;
-      text-decoration: none;
-      white-space: nowrap;
-    }
-    .page-nav a:hover { border-color: var(--ink); background: var(--mint); }
-    .page-nav a[aria-current="page"] { border-color: var(--ink); background: var(--yellow); }
-
-    .brand { display: flex; align-items: center; gap: 16px; }
-    .logo {
-      display: grid;
-      place-items: center;
-      width: 58px;
-      height: 58px;
-      border: var(--line);
-      background: var(--coral);
-      font-size: 30px;
-      transform: rotate(-3deg);
-    }
+    /* Knowledge workbench. Shell and tokens come from theme.css + console.css. */
     h1, h2, h3, p { margin-top: 0; }
-    h1 { margin-bottom: 5px; font-size: clamp(23px, 3vw, 37px); }
-    .subtitle { margin: 0; color: var(--muted); font-weight: 700; }
+    .header-actions:empty { display: none; }
 
-    .button, button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      min-height: 44px;
-      padding: 9px 16px;
-      border: 3px solid var(--ink);
-      color: var(--ink);
-      background: var(--yellow);
-      box-shadow: 4px 4px 0 var(--ink);
-      font-weight: 900;
-      text-decoration: none;
-      cursor: pointer;
-      transition: transform .12s, box-shadow .12s;
-    }
-    .button:hover, button:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
-    .button:active, button:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
-    button:disabled { opacity: .55; cursor: wait; transform: none; }
-    .button.coral, button.coral { background: var(--coral); }
-    .button.mint, button.mint { background: var(--mint); }
-    .button.blue, button.blue { background: var(--blue); }
+    /* Overview cards sit directly on the page background. */
+    .console-page .metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px; padding: 0; border: 0; background: transparent; box-shadow: none; }
+    .metric { min-width: 0; padding: 18px 20px; border: var(--line); background: var(--surface); box-shadow: var(--shadow-lg); transition: transform var(--ease), box-shadow var(--ease); }
+    .metric:hover { transform: translate(-2px, -2px); box-shadow: var(--shadow-pink); }
+    .metric:nth-child(2) { background: var(--lime-soft); }
+    .metric:nth-child(3) { background: var(--amber-soft); }
+    .metric:nth-child(4) { background: var(--sky-soft); }
+    .metric:nth-child(5) { background: var(--pink-soft); }
+    .metric strong { display: block; overflow-wrap: anywhere; font: 700 32px/1 var(--font-mono); letter-spacing: -.03em; }
+    .metric span { display: block; margin-top: 10px; font: 700 12px/1.5 var(--font-mono); letter-spacing: .04em; }
 
-    .metrics {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 16px;
-      margin: 24px 0;
-    }
-    .metric {
-      padding: 17px 20px;
-      border: var(--line);
-      background: var(--paper);
-      box-shadow: 5px 5px 0 var(--ink);
-    }
-    .metric:nth-child(2) { background: var(--green); }
-    .metric:nth-child(3) { background: var(--yellow); }
-    .metric:nth-child(4) { background: var(--blue); }
-    .metric:nth-child(5) { background: var(--mint); }
-    .metric strong { display: block; font-size: 31px; line-height: 1; }
-    .metric span { display: block; margin-top: 8px; font-weight: 800; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .console-page .panel-head h2 { margin: 0; }
+    .console-page .tag { padding: 2px 10px; border: var(--line); background: var(--amber-soft); font: 700 12px/1.6 var(--font-mono); }
+    .section-copy { color: var(--muted); font-size: 13px; line-height: 1.65; }
 
-    .full-stack { display: grid; gap: 22px; }
-    .panel {
-      min-width: 0;
-      padding: 22px;
-      border: var(--line);
-      background: var(--paper);
-      box-shadow: var(--shadow);
-    }
-    .panel-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 17px;
-    }
-    .panel h2 { margin: 0; font-size: 21px; }
-    .tag {
-      padding: 5px 10px;
-      border: 2px solid var(--ink);
-      background: var(--yellow);
-      font: 800 12px ui-monospace, monospace;
-    }
+    .preview-list, .chunk-list, .search-results { display: grid; gap: 12px; }
+    .preview-list { max-height: 640px; overflow-y: auto; padding: 0 8px 6px 0; }
+    .preview-card, .chunk-card, .result-card { padding: 14px 16px; border: var(--line); background: var(--surface); box-shadow: var(--shadow-sm); }
+    .preview-card.key { background: var(--amber-soft); }
+    .card-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .pill { display: inline-block; padding: 1px 8px; border: 2px solid var(--ink); background: var(--sky-soft); font: 700 12px/1.6 var(--font-mono); }
+    .pill.pending { background: var(--amber); }
+    .pill.done { background: var(--lime-soft); }
+    .card-title { margin-bottom: 6px; font-weight: 700; }
+    .card-answer { margin: 0; color: var(--text); font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+    .card-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    .console-page .card-actions button { min-height: 34px; margin: 0; padding: 0 14px; }
+    .console-page button.danger { color: var(--danger); }
 
-    .preview-list, .chunk-list, .search-results {
-      display: grid;
-      gap: 12px;
-    }
-
-    .preview-list { max-height: 640px; overflow-y: auto; padding-right: 7px; }
-    .preview-card, .chunk-card, .result-card {
-      padding: 15px;
-      border: 3px solid var(--ink);
-      background: white;
-    }
-    .preview-card.key { background: #fff3b1; }
-    .card-meta { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 9px; }
-    .pill {
-      display: inline-block;
-      padding: 3px 8px;
-      border: 2px solid var(--ink);
-      background: var(--mint);
-      font-size: 12px;
-      font-weight: 900;
-    }
-    .pill.pending { background: var(--coral); }
-    .pill.done { background: var(--green); }
-    .card-title { margin-bottom: 7px; font-weight: 900; }
-    .card-answer { margin: 0; color: #333; line-height: 1.65; white-space: pre-wrap; }
-    .card-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 13px; }
-    .card-actions button { min-height: 34px; padding: 5px 11px; box-shadow: 3px 3px 0 var(--ink); }
-    .danger { color: white; background: #d93434; }
-
-    form { display: grid; gap: 13px; }
-    label { display: grid; gap: 6px; font-weight: 900; }
-    input, textarea, select {
-      width: 100%;
-      border: 3px solid var(--ink);
-      border-radius: 0;
-      padding: 10px 12px;
-      color: var(--ink);
-      background: white;
-      outline: none;
-    }
-    input:focus, textarea:focus, select:focus { box-shadow: 4px 4px 0 var(--mint); }
+    form { display: grid; gap: 14px; }
+    label { display: grid; gap: 6px; font-size: 13px; font-weight: 700; }
+    .console-page form input:not([type="checkbox"]), .console-page form textarea, .console-page form select { width: 100%; }
     textarea { min-height: 100px; resize: vertical; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .checkbox { display: flex; align-items: center; gap: 9px; }
-    .checkbox input { width: 20px; height: 20px; accent-color: var(--coral); }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .checkbox { display: flex; align-items: center; gap: 8px; }
+    .console-page .checkbox input { width: 18px; height: 18px; margin: 0; padding: 0; }
+    #markdownInput { min-height: 230px; font: 13px/1.6 var(--font-mono); }
 
-    .action-box {
-      padding: 16px;
-      border: 3px dashed var(--ink);
-      background: #f8f5e9;
-    }
-    .action-box p { margin-bottom: 13px; line-height: 1.6; }
+    .console-page .button.mint, .console-page button.mint { background: var(--lime); }
+    .console-page .button.blue, .console-page button.blue { background: var(--sky); }
+    /* One pink primary per form: the plain submit beside "切块预览" stays neutral. */
+    .console-page button[type="submit"]:not([class]) { background: var(--surface); }
+    .inline-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }
+    .row .inline-actions { align-self: end; margin-top: 0; }
+    .console-page .inline-actions button { margin: 0; }
+
+    .action-box { padding: 16px; border: 2px dashed var(--ink); background: var(--bg); }
+    .action-box p { margin-bottom: 12px; line-height: 1.6; }
     .table-wrap { width: 100%; overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; background: white; }
-    th, td { padding: 10px; border: 2px solid var(--ink); text-align: left; vertical-align: top; }
-    th { background: #ff9d52; font-size: 13px; }
-    td.number { text-align: right; font-variant-numeric: tabular-nums; }
-    td button { min-height: 32px; padding: 4px 9px; box-shadow: 2px 2px 0 var(--ink); }
-    tr.duplicate td { background: #ffe6ea; }
-    .inline-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
-    .mini-metrics { display: flex; flex-wrap: wrap; gap: 10px; }
-    .mini-metric { min-width: 128px; padding: 10px 12px; border: 3px solid var(--ink); background: white; }
-    .mini-metric strong { display: block; font-size: 23px; }
-    .mini-metric span { font-size: 12px; font-weight: 800; }
-    .section-copy { color: var(--muted); line-height: 1.6; }
-    #markdownInput { min-height: 230px; font-family: ui-monospace, "Cascadia Mono", monospace; }
+    .table-wrap:has(table) { border: var(--line); }
+    .table-wrap table { width: 100%; background: var(--surface); }
+    .console-page .table-wrap th, .console-page .table-wrap td { text-align: left; vertical-align: top; }
+    .console-page .table-wrap tbody tr:last-child td { border-bottom: 0; }
+    .table-wrap tbody tr:hover td { background: var(--sky-soft); }
+    td.number { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+    .console-page td button { min-height: 32px; margin: 0; padding: 0 10px; font-size: 13px; }
+    .table-wrap tr.duplicate td { background: var(--pink-soft); }
+
+    .mini-metrics { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
+    .mini-metric { min-width: 136px; padding: 10px 14px; border: var(--line); background: var(--bg); }
+    .mini-metric strong { display: block; overflow-wrap: anywhere; font: 700 22px/1.3 var(--font-mono); }
+    .mini-metric span { color: var(--muted); font-size: 12px; font-weight: 700; }
     .preview-summary { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
-    .search-controls {
-      display: grid;
-      grid-template-columns: minmax(320px, 1fr) 280px 150px auto;
-      align-items: end;
-      gap: 10px;
-    }
-    .search-controls label {
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr);
-      align-items: center;
-      gap: 9px;
-      white-space: nowrap;
-    }
-    .search-controls label select { min-width: 210px; }
-    .search-controls label input[type="number"] { min-width: 78px; }
-    .query-examples { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-    .query-examples button { min-height: 32px; padding: 4px 10px; background: white; box-shadow: 2px 2px 0 var(--ink); }
-    .search-meta { margin-top: 12px; font-weight: 800; }
+
+    .search-controls { display: grid; grid-template-columns: minmax(320px, 1fr) 280px 150px auto; align-items: end; gap: 12px; }
+    .search-controls label { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px; white-space: nowrap; }
+    .search-controls label select { min-width: 200px; }
+    .search-controls label input[type="number"] { min-width: 72px; }
+    .console-page .search-controls button { min-height: 44px; margin: 0; }
+    .query-examples { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .console-page .query-examples button { min-height: 32px; margin: 0; padding: 0 12px; background: var(--sky-soft); font-size: 13px; }
+    .search-meta { margin-top: 12px; font: 700 12px/1.6 var(--font-mono); }
 
     .toolbar { display: flex; align-items: center; gap: 10px; }
-    .toolbar select { width: auto; min-width: 120px; }
-    .pagination {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 3px solid var(--ink);
-    }
-    .pagination button { min-height: 38px; padding: 7px 12px; }
-    .pagination button:disabled { cursor: not-allowed; opacity: .45; transform: none; }
-    .page-summary { margin-right: auto; font-weight: 900; }
-    .page-size { display: flex; align-items: center; gap: 7px; }
-    .page-size select { width: auto; min-width: 72px; padding: 7px 9px; }
-    .empty {
-      padding: 24px;
-      border: 3px dashed var(--ink);
-      color: var(--muted);
-      text-align: center;
-      font-weight: 800;
-      background: #f8f5e9;
-    }
-    .toast {
-      position: fixed;
-      right: 24px;
-      bottom: 24px;
-      z-index: 10;
-      max-width: min(440px, calc(100vw - 48px));
-      padding: 14px 18px;
-      border: var(--line);
-      background: var(--green);
-      box-shadow: 6px 6px 0 var(--ink);
-      font-weight: 900;
-    }
-    .toast.error { color: white; background: #d93434; }
+    .console-page .toolbar select { width: auto; min-width: 120px; }
+    .pagination { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 2px solid var(--rule); }
+    .console-page .pagination button { min-height: 38px; margin: 0; padding: 0 14px; }
+    .page-summary { margin-right: auto; font: 700 12px/1.6 var(--font-mono); }
+    .page-size { display: flex; align-items: center; gap: 8px; }
+    .console-page .page-size select { width: auto; min-width: 72px; padding: 6px 8px; }
+    .empty { padding: 24px; border: 2px dashed var(--ink); background: var(--bg); color: var(--muted); text-align: center; font-weight: 700; }
+
+    .toast { position: fixed; right: 24px; bottom: 24px; z-index: 40; max-width: min(440px, calc(100vw - 48px)); padding: 14px 18px; border: var(--line); background: var(--lime-soft); box-shadow: var(--shadow-lg); font-weight: 700; }
+    .toast.error { background: var(--pink-soft); color: var(--danger); box-shadow: var(--shadow-pink); }
     .hidden { display: none !important; }
 
-    @media (max-width: 900px) {
-      .metrics { grid-template-columns: repeat(2, 1fr); }
+    @media (max-width: 1100px) {
+      .console-page .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .search-controls { grid-template-columns: 1fr 1fr; }
-      header { align-items: flex-start; flex-direction: column; }
-      .header-actions { width: 100%; justify-content: space-between; flex-wrap: wrap; }
     }
     @media (max-width: 560px) {
-      .shell { width: min(100% - 18px, 1480px); margin-top: 9px; }
-      header, .panel { padding: 16px; }
-      .metrics, .row { grid-template-columns: 1fr; }
-      .search-controls { grid-template-columns: 1fr; }
+      .console-page .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .row, .search-controls { grid-template-columns: 1fr; }
       .pagination { justify-content: space-between; }
       .page-summary { width: 100%; margin-right: 0; }
     }
@@ -302,7 +115,6 @@
   <main class="shell">
     <header>
       <div class="brand">
-        <div class="logo" aria-hidden="true">🐱</div>
         <div>
           <h1>知识库工作台</h1>
           <p class="subtitle">维护服务知识，检查索引状态与检索结果。</p>
@@ -391,7 +203,7 @@
           <div class="mini-metric"><strong id="vectorMilvus">—</strong><span>Milvus 条数</span></div>
           <div class="mini-metric"><strong id="vectorCollection">—</strong><span>集合</span></div>
         </div>
-        <div class="inline-actions"><button id="vectorizeButton" class="mint" type="button">⚡ 补齐 pending 向量</button></div>
+        <div class="inline-actions"><button id="vectorizeButton" class="mint" type="button">补齐 pending 向量</button></div>
       </section>
 
       <section class="panel">
@@ -879,7 +691,7 @@
         showToast(error.message, true);
       } finally {
         button.disabled = false;
-        button.textContent = "⚡ 补齐 pending 向量";
+        button.textContent = "补齐 pending 向量";
       }
     });
 
