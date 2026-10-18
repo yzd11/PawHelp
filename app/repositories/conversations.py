@@ -38,4 +38,4 @@ class ConversationRepository:
     async def list_owned(self, user_id: str) -> list[dict[str, object]]:
         first_question = select(Message.content).where(Message.conversation_id == Conversation.id, Message.role == "user").order_by(Message.id).limit(1).scalar_subquery()
         rows = await self._session.execute(select(Conversation, first_question.label("preview")).where(Conversation.user_id == user_id).order_by(Conversation.id.desc()))
-        return [{"id": conversation.id, "preview": (preview or "新会话")[:80], "has_summary": bool(conversation.summary_upto_msg_id), "created_at": conversation.created_at.isoformat(), "status": conversation.status} for conversation, preview in rows]
+        return [{"id": conversation.id, "preview": (conversation.title or preview or "新会话")[:80], "title": conversation.title, "has_summary": bool(conversation.summary_upto_msg_id), "created_at": conversation.created_at.isoformat(), "status": conversation.status} for conversation, preview in rows]

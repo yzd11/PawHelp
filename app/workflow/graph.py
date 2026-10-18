@@ -33,6 +33,7 @@ from app.tools.registry import ToolRegistry
 from app.workflow.memory import SessionMemory
 from app.workflow.nodes import TurnNodes, after_agent, after_confidence_gate, after_route, after_select_order
 from app.workflow.tool_agent import ToolAgentNodes, ticket_requested
+from app.workflow.titles import ConversationTitles
 from app.workflow.understanding import Intent, Route
 
 
@@ -114,6 +115,7 @@ class WorkflowChatService(ToolAwareChatService):
         tools = [tool for tool in self._tool_builder(runtime) if tool.name not in {"query_logistics", "query_faq"}]
         self._startup_registry = ToolRegistry(tools)
         system = CUSTOMER_SERVICE_SYSTEM_TEMPLATE.format(shop_name=self._settings.shop_name) + "\n" + _AGENT_RULES
+        self._titles = ConversationTitles(self._settings, self._session_factory, self._model)
         self._memory = SessionMemory(self._settings, self._session_factory, self._model, system,
                                      json.dumps([convert_to_openai_tool(tool) for tool in tools], ensure_ascii=False))
         self._evidence_pipeline = KnowledgeEvidencePipeline(
@@ -148,6 +150,7 @@ class WorkflowChatService(ToolAwareChatService):
 
     async def close(self) -> None:
         await self._memory.close()
+        await self._titles.close()
         await self._observability.close()
 
     def set_checkpointer(self, checkpointer: BaseCheckpointSaver) -> None:
@@ -264,6 +267,9 @@ class WorkflowChatService(ToolAwareChatService):
                 memory = nodes.memory
                 view = await memory.prepare(turn.conversation_id, turn.user_id, snapshot.values["messages"], snapshot.values["user_message_id"])
                 memory.schedule(turn.conversation_id, turn.user_id, view)
+            # Greetings make poor titles; wait for the first substantive question.
+            if not snapshot.tasks and snapshot.values.get("message_id") and snapshot.values.get("intent") != "闲聊":
+                self._titles.schedule(turn.conversation_id, turn.user_id, snapshot.values["raw_question"])
             for task in snapshot.tasks:
                 for pending in task.interrupts:
                     if isinstance(pending.value, dict) and pending.value.get("kind") == "select_order":

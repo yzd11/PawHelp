@@ -80,7 +80,7 @@ async def context_sessions():
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     meta = MetaData()
     Table("conversations", meta, Column("id", Integer, primary_key=True), Column("user_id", String), Column("status", String, server_default="进行中"),
-          Column("summary", Text), Column("summary_upto_msg_id", Integer), Column("layer1_from_msg_id", Integer),
+          Column("summary", Text), Column("summary_upto_msg_id", Integer), Column("layer1_from_msg_id", Integer), Column("title", String),
           Column("created_at", DateTime, server_default=text("CURRENT_TIMESTAMP")), Column("updated_at", DateTime, server_default=text("CURRENT_TIMESTAMP")))
     Table("messages", meta, Column("id", Integer, primary_key=True), Column("conversation_id", Integer), Column("role", String), Column("content", Text),
           Column("tool_calls", JSON), Column("tool_call_id", String), Column("tool_trace", JSON), Column("suggested_actions", JSON), Column("source_refs", JSON),

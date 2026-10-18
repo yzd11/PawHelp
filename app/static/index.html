@@ -765,22 +765,36 @@
         if (!response.ok) return; // The sidebar must never break the chat.
         const rows = await response.json();
         if (epoch !== conversationListEpoch || !Array.isArray(rows)) return;
-        const list = document.querySelector("#conversationList");
-        list.replaceChildren();
-        for (const row of rows) {
-          if (!Number.isSafeInteger(row.id) || row.id < 1) continue;
-          const button = document.createElement("button");
-          button.type = "button";
-          button.className = "session-button";
-          button.setAttribute("aria-current", row.id === conversationId ? "true" : "false");
-          button.textContent = row.preview || "新会话";
-          const badge = document.createElement("small");
-          badge.textContent = `会话 ${row.id}`;
-          button.appendChild(badge);
-          button.addEventListener("click", () => switchConversation(row.id));
-          list.appendChild(button);
-        }
+        renderConversationList(rows);
+        return rows;
       } catch (_) { /* silent degradation, current conversation stays usable */ }
+    }
+
+    // Titles are generated in the background after a turn; look once more shortly after.
+    async function refreshConversationTitle() {
+      const rows = await refreshConversationList();
+      if (rows?.some((row) => row.id === conversationId && !row.title)) setTimeout(refreshConversationList, 3000);
+    }
+
+    function renderConversationList(rows) {
+      const list = document.querySelector("#conversationList");
+      list.replaceChildren();
+      for (const row of rows) {
+        if (!Number.isSafeInteger(row.id) || row.id < 1) continue;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "session-button";
+        button.setAttribute("aria-current", row.id === conversationId ? "true" : "false");
+        const label = document.createElement("span");
+        label.className = "session-title";
+        label.textContent = row.preview || "新会话";
+        button.appendChild(label);
+        const badge = document.createElement("small");
+        badge.textContent = `会话 ${row.id}`;
+        button.appendChild(badge);
+        button.addEventListener("click", () => switchConversation(row.id));
+        list.appendChild(button);
+      }
     }
 
     async function switchConversation(id) {
@@ -1002,7 +1016,7 @@
           applyToolTrace(assistant, data.tool_trace);
           renderSuggestedActions(assistant, data.suggested_actions, data.message_id, data.related_order_id);
           completed = true;
-          refreshConversationList();
+          refreshConversationTitle();
         } else if (event === "error") {
           throw new PublicFacingError(data.message || "客服暂时开小差了，请稍后再试。");
         }

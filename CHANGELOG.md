@@ -10,6 +10,8 @@
   restart through the SQLite checkpointer.
 - Layered session context with a token budget and asynchronous summaries.
 - Guards against rewrites that invent or replace an explicit order number.
+- Sidebar titles generated once in the background; greetings are skipped and
+  short questions are used as-is, falling back to the first question on failure.
 
 ### Knowledge and retrieval
 

@@ -62,6 +62,7 @@ class Conversation(Base):
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     summary_upto_msg_id: Mapped[int | None] = mapped_column(BIGINT(unsigned=True), nullable=True)
     layer1_from_msg_id: Mapped[int | None] = mapped_column(BIGINT(unsigned=True), nullable=True)
+    title: Mapped[str | None] = mapped_column(VARCHAR(32), nullable=True)
     created_at: Mapped[datetime] = _created_at()
     updated_at: Mapped[datetime] = _updated_at()
 

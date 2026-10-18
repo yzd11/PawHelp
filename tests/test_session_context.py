@@ -216,6 +216,70 @@ async def test_owned_list_and_history_api_aliases(context_sessions):
             assert foreign.status_code == 404
 
 
+class TitleModel(Model):
+    def __init__(self):
+        super().__init__()
+        self.title_calls = 0
+        self.title_error = None
+
+    def with_structured_output(self, schema, **kwargs):
+        if schema.__name__ == "TitleResult":
+            parent = self
+            class Runnable:
+                async def ainvoke(self, messages):
+                    parent.title_calls += 1
+                    if parent.title_error:
+                        raise parent.title_error
+                    return {"title": "“猫粮软便换粮。”"}
+            return Runnable()
+        if schema.__name__ == "IntentDecision":
+            class Intent:
+                async def ainvoke(self, messages):
+                    greeting = "你好" in str(messages[-1].content)
+                    return {"intent": "闲聊" if greeting else "其他", "confidence": 0.99}
+            return Intent()
+        return super().with_structured_output(schema, **kwargs)
+
+
+@pytest.mark.asyncio
+async def test_sidebar_title_is_generated_once_and_falls_back_to_first_question(context_sessions):
+    import httpx
+    from fastapi import FastAPI
+    from app.api import create_api_router
+    model = TitleModel()
+    service = WorkflowChatService(catalog=TestToolCatalog(), settings=settings(model_context_window=1_000_000), model=model,
+                                  session_factory=context_sessions, order_data=FakeOrderData())
+    user = str(uuid4())
+
+    async def chat(message, conversation_id=None):
+        turn = await service.prepare_turn(ChatRequest(user_id=user, conversation_id=conversation_id, message=message))
+        assert [event async for event in service.stream_turn(turn)][-1].name == "done"
+        await asyncio.gather(*list(service._titles.tasks.values()))
+        return turn.conversation_id
+
+    # A greeting waits for the first real question, which the model compresses once.
+    titled = await chat("你好")
+    assert model.title_calls == 0
+    await chat("我家猫换了新买的猫粮以后一直软便，需要换回原来的吗", titled)
+    await chat("另外狗粮有没有小颗粒的款式可以推荐一下", titled)
+    assert model.title_calls == 1
+    # A short question is its own title without a model call.
+    short = await chat("猫砂怎么选？")
+    assert model.title_calls == 1
+    # A model failure leaves the first question in place.
+    model.title_error = TimeoutError()
+    failed = await chat("订单1001买的猫抓板到了但是少了一个配件怎么办")
+
+    app = FastAPI()
+    app.include_router(create_api_router(settings(), model, context_sessions, object(), object()))
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app), base_url="http://test") as client:
+        listing = {row["id"]: row for row in (await client.get("/api/conversations", headers={"X-Demo-User-Id": user})).json()}
+    assert listing[titled]["preview"] == "猫粮软便换粮" and listing[titled]["title"] == "猫粮软便换粮"
+    assert listing[short]["preview"] == "猫砂怎么选"
+    assert listing[failed]["preview"] == "订单1001买的猫抓板到了但是少了一个配件怎么办" and listing[failed]["title"] is None
+    await service.close()
+
+
 @pytest.mark.asyncio
 async def test_same_session_serialization_and_summary_reference(context_sessions):
     model = Model()

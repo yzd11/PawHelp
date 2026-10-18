@@ -36,6 +36,7 @@ body { overflow: hidden; }
 }
 .session-button:hover { background: var(--pink-soft); box-shadow: none; transform: translate(2px, 2px); }
 .session-button[aria-current="true"] { background: var(--pink-soft); box-shadow: 3px 3px 0 0 rgba(244, 114, 182, .6); }
+.session-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 .session-button small { display: block; margin-top: 3px; color: var(--muted); font: 400 12px/1.5 var(--font-mono); }
 
 /* Legacy preview card: JS still writes #conversationPreview, the sidebar list replaced it. */
@@ -261,7 +262,8 @@ body { overflow: hidden; }
   .sidebar .brand, .sidebar-note { display: none; }
   .sidebar-label { margin: 0; font-size: 11px; }
   .conversation-list { flex-direction: row; overflow-x: auto; padding: 0 4px 6px 0; }
-  .session-button { width: 180px; padding: 6px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+  .session-button { width: 180px; padding: 6px 10px; font-size: 13px; }
+  .session-title { display: block; white-space: nowrap; text-overflow: ellipsis; }
   .chat-panel { border: 0; box-shadow: none; }
   .topbar { flex-wrap: wrap; padding: 12px 16px; }
   .agent-avatar { width: 42px; height: 42px; }
