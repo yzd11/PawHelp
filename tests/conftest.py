@@ -43,7 +43,15 @@ def isolate_test_settings(monkeypatch):
 def pytest_sessionstart(session):
     # Also cover module-level create_app()/cached Settings during collection,
     # before per-test fixtures start. This affects only the pytest process.
-    os.environ["OBSERVABILITY_ENABLED"] = "false"
+    # Fake required settings let collection pass without a .env (as in CI) and
+    # override a developer's .env, so local runs see the same values.
+    os.environ.update({
+        "CHAT_BASE_URL": "http://localhost/v1",
+        "OPENAI_MODEL": "fake",
+        "OPENAI_API_KEY": "fake",
+        "DATABASE_URL": "mysql+asyncmy://unused",
+        "OBSERVABILITY_ENABLED": "false",
+    })
 
 
 @pytest_asyncio.fixture

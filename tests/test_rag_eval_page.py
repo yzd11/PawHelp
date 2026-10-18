@@ -1,7 +1,9 @@
 """RAG evaluation console delivery and report API contracts."""
 
+import pytest
 from fastapi.testclient import TestClient
 
+from app.api.evaluation import RAG_EVAL_REPORT_PATH
 from app.config import Settings
 from app.main import RAG_EVAL_PAGE_PATH, create_app
 from tests.fakes import FakeChatModel
@@ -19,10 +21,9 @@ def _settings() -> Settings:
     )
 
 
-def test_rag_eval_page_and_committed_report_are_served() -> None:
+def test_rag_eval_page_is_served() -> None:
     with TestClient(create_app(settings=_settings(), model=FakeChatModel())) as client:
         page = client.get("/rag-eval")
-        report = client.get("/v1/rag-eval/report")
 
     assert page.status_code == 200
     assert page.content == RAG_EVAL_PAGE_PATH.read_bytes()
@@ -58,6 +59,14 @@ def test_rag_eval_page_and_committed_report_are_served() -> None:
     assert 'id="productionBreakdown" hidden' in page.text
     assert "productionBreakdown.hidden = !generationEnabled || showComparison" in page.text
     assert 'id="refusalCard"' not in page.text
+
+
+# The full report is a local, gitignored run artifact; CI has no copy.
+@pytest.mark.skipif(not RAG_EVAL_REPORT_PATH.exists(), reason="local retrieval report not generated")
+def test_local_report_is_served() -> None:
+    with TestClient(create_app(settings=_settings(), model=FakeChatModel())) as client:
+        report = client.get("/v1/rag-eval/report")
+
     assert report.status_code == 200
     payload = report.json()
     assert payload["dataset_alignment"]["status"] in {"current", "stale", "unverified"}
