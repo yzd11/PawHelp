@@ -15,7 +15,8 @@
 
 - Markdown ingestion into structured chunks; BGE-M3 dense + Milvus BM25 hybrid
   recall, RRF fusion, BGE reranking and a calibrated evidence gate with citations.
-- 300-question retrieval benchmark comparing four strategies by query type.
+- 500-question retrieval benchmark (410 answerable, 90 out-of-scope) comparing
+  four strategies by query type.
 - Knowledge flywheel: low-confidence questions are normalized, deduplicated,
   reviewed by an operator and written back to the knowledge base.
 
