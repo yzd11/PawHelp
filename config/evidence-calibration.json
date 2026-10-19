@@ -23,12 +23,12 @@
   },
   "validation_method": "independent",
   "reranker_model": "BAAI/bge-reranker-v2-m3",
-  "corpus_fingerprint": "7b6612c1cb8fe132ac611c00adb09409172d780d70d850b388801e0eb89a11dd",
-  "dataset_sha256": "41d458374c91f5cab9da16d16ac23f1ec001c4d23a7aee6bcf87ac90e7f4b192",
+  "corpus_fingerprint": "b99f4811c749349fe57fa41e8463ef16a12d6b4e7b212b32938c0998a0bdc422",
+  "dataset_sha256": "10e99984d289d4043695c174c61bf7d14849bc8e5439d7e56d2c569f2c1d4ce0",
   "sample_count": 72,
   "collection_mode": "raw query, local retrieval only; serving rewrite distribution must be audited",
   "reviewer": "Claude 逐条原文审阅（要点字面命中作初稿），用户授权代做标注；不是人工业务核准",
   "scope_limit": "96题小样本原始Top5快照；线上拆分/改写分布不同，需另验。评测题与知识文档均为自建生成，不代表生产错误率保证。",
-  "training_labels_sha256": "410768bdb1a2577a1782044268633eeeb26ad0cfaeb2cbe961850428e757993c",
-  "validation_labels_sha256": "b28f36088482a1bb962181b5ce57f41442822db2743c171568395e035e5860c0"
+  "training_labels_sha256": "7a2bc3958bfebabeb933a006adb1ac58311bb420584a3309f031cc6c8dc639ec",
+  "validation_labels_sha256": "49074e1dd95fe345fd238f9c47db53850dd5f70205de17924da46b5c093cba3f"
 }

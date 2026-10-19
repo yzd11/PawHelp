@@ -23,6 +23,10 @@
   reviewed by an operator and written back to the knowledge base.
 - Review page shows evidence-gate refusals as a sentence with score and threshold,
   not the stored confidence JSON.
+- Invoice requests are accepted within 30 days of confirmed receipt (was 90); the
+  benchmark rows and the evidence-gate calibration were updated with it. The
+  96 labelled cases were re-collected locally and re-reviewed; the threshold (0.127)
+  and its independent validation result are unchanged.
 
 ### Tools
 
