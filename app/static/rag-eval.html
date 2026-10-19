@@ -15,35 +15,59 @@
     .console-page .button:disabled { cursor: wait; }
 
     .console-page .notice { margin: 0 0 28px; }
-    .console-page .notice.error { border-style: solid; background: var(--pink-soft); color: var(--danger); font-weight: 700; }
+    .console-page .notice.error {
+      border-style: solid; background: var(--pink-soft); color: var(--danger); font-weight: 700;
+    }
 
     /* Overview cards sit directly on the page background. */
-    .console-page .run-grid, .console-page .metrics { padding: 0; border: 0; background: transparent; box-shadow: none; }
+    .console-page .run-grid, .console-page .metrics {
+      padding: 0; border: 0; background: transparent; box-shadow: none;
+    }
     .run-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
-    .run-card { min-width: 0; padding: 14px 16px; border: var(--line); background: var(--surface); box-shadow: var(--shadow-sm); }
+    .run-card {
+      min-width: 0; padding: 14px 16px; border: var(--line); background: var(--surface); box-shadow: var(--shadow-sm);
+    }
     .run-card span { display: block; color: var(--muted); font: 700 11px/1.5 var(--font-mono); letter-spacing: .05em; }
-    .run-card strong { display: block; margin-top: 6px; overflow-wrap: anywhere; white-space: pre-line; font-size: 15px; }
+    .run-card strong {
+      display: block; margin-top: 6px; overflow-wrap: anywhere; white-space: pre-line; font-size: 15px;
+    }
     .run-card small { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; line-height: 1.5; }
     .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
-    .metric { min-width: 0; padding: 20px 22px; border: var(--line); background: var(--surface); box-shadow: var(--shadow-lg); transition: transform var(--ease), box-shadow var(--ease); }
+    .metric {
+      min-width: 0; padding: 20px 22px; border: var(--line); background: var(--surface); box-shadow: var(--shadow-lg);
+      transition: transform var(--ease), box-shadow var(--ease);
+    }
     .metric:hover { transform: translate(-2px, -2px); box-shadow: var(--shadow-pink); }
     .metric:nth-child(1) { background: var(--pink-soft); }
     .metric:nth-child(2) { background: var(--amber-soft); }
     .metric:nth-child(3) { background: var(--lime-soft); }
     .metric-name { font: 700 12px/1.5 var(--font-mono); letter-spacing: .04em; }
-    .metric-value { display: block; margin: 12px 0 8px; font: 700 clamp(30px, 3.4vw, 42px)/1 var(--font-mono); letter-spacing: -.03em; }
+    .metric-value {
+      display: block; margin: 12px 0 8px; font: 700 clamp(30px, 3.4vw, 42px)/1 var(--font-mono); letter-spacing: -.03em;
+    }
     .metric-hint { display: block; color: var(--muted); font-size: 13px; }
 
-    .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .panel-head {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px;
+    }
     .panel-head h2 { margin: 0; }
     .metric-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
     .console-page .metric-tab { min-height: 36px; margin: 0; padding: 0 14px; font-size: 13px; }
     .console-page .metric-tab.active { background: var(--sky); box-shadow: none; transform: translate(2px, 2px); }
-    .metric-help { margin: 0 0 16px; padding: 10px 14px; border-left: 4px solid var(--sky); background: var(--sky-soft); font-size: 13px; line-height: 1.65; }
+    .metric-help {
+      margin: 0 0 16px; padding: 10px 14px; border-left: 4px solid var(--sky); background: var(--sky-soft);
+      font-size: 13px; line-height: 1.65;
+    }
 
     .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 8px; font-size: 13px; font-weight: 700; }
-    .legend i { display: inline-block; width: 14px; height: 14px; margin-right: 6px; border: 2px solid var(--ink); vertical-align: -2px; }
-    .bucket-chart { display: grid; grid-template-columns: repeat(6, minmax(110px, 1fr)); gap: 16px; align-items: end; min-height: 380px; padding: 30px 8px 0; border-bottom: var(--line); }
+    .legend i {
+      display: inline-block; width: 14px; height: 14px; margin-right: 6px; border: 2px solid var(--ink);
+      vertical-align: -2px;
+    }
+    .bucket-chart {
+      display: grid; grid-template-columns: repeat(6, minmax(110px, 1fr)); gap: 16px; align-items: end;
+      min-height: 380px; padding: 30px 8px 0; border-bottom: var(--line);
+    }
     .bucket-chart[hidden] { display: none; }
     .bucket-group { display: grid; grid-template-rows: 300px auto; gap: 10px; min-width: 0; }
     .bucket-bars { display: flex; align-items: end; justify-content: center; gap: 4px; height: 300px; }
@@ -52,14 +76,21 @@
     .bucket-bar:nth-child(2) { background: var(--s-bm25); }
     .bucket-bar:nth-child(3) { background: var(--s-hybrid); }
     .bucket-bar:nth-child(4) { background: var(--s-rerank); }
-    .bucket-bar b { position: absolute; left: 50%; top: -20px; transform: translateX(-50%); font: 700 11px/1 var(--font-mono); }
+    .bucket-bar b {
+      position: absolute; left: 50%; top: -20px; transform: translateX(-50%); font: 700 11px/1 var(--font-mono);
+    }
     .bucket-label { padding-bottom: 10px; text-align: center; font-weight: 800; }
     .bucket-label small { display: block; margin-top: 2px; color: var(--muted); font: 400 11px/1.5 var(--font-mono); }
-    .reading { margin-top: 18px; padding: 10px 14px; border: 2px dashed var(--ink); background: var(--bg); font-size: 13px; }
+    .reading {
+      margin-top: 18px; padding: 10px 14px; border: 2px dashed var(--ink); background: var(--bg); font-size: 13px;
+    }
 
     .breakdown-title { margin: 18px 0 8px; font-size: 15px; }
     .production-breakdown[hidden] { display: none; }
-    .faith-row { display: grid; grid-template-columns: 200px 1fr 52px; align-items: center; gap: 12px; margin: 12px 0; font-weight: 700; }
+    .faith-row {
+      display: grid; grid-template-columns: 200px 1fr 52px; align-items: center; gap: 12px; margin: 12px 0;
+      font-weight: 700;
+    }
     .faith-row > span:last-child { font-family: var(--font-mono); text-align: right; }
     .faith-track { height: 20px; border: var(--line); background: var(--bg); }
     .faith-track i { display: block; height: 100%; background: var(--lime); border-right: var(--line); }
@@ -70,9 +101,15 @@
     .console-page .issue-filter.active { background: var(--sky); box-shadow: none; transform: translate(2px, 2px); }
     .issue-list { display: grid; gap: 12px; }
     .console-page .issue { padding: 0; border: var(--line); background: var(--surface); box-shadow: var(--shadow-sm); }
-    .issue summary { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 14px; font-weight: 700; list-style: none; }
+    .issue summary {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 14px; font-weight: 700;
+      list-style: none;
+    }
     .issue summary::-webkit-details-marker { display: none; }
-    .issue summary::before { content: "+"; display: grid; place-items: center; width: 24px; height: 24px; flex: 0 0 auto; border: var(--line); background: var(--surface); font-family: var(--font-mono); }
+    .issue summary::before {
+      content: "+"; display: grid; place-items: center; width: 24px; height: 24px; flex: 0 0 auto; border: var(--line);
+      background: var(--surface); font-family: var(--font-mono);
+    }
     .issue[open] summary { border-bottom: 2px solid var(--rule); }
     .issue[open] summary::before { content: "−"; background: var(--amber); }
     .issue-title { flex: 1; min-width: 200px; }
@@ -86,24 +123,35 @@
     .review-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
     .review-feedback { color: var(--danger); font-weight: 700; }
     .console-page .mini-button { min-height: 34px; padding: 0 12px; font-size: 13px; background: var(--sky-soft); }
-    .issue-pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+    .issue-pagination {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 16px;
+    }
     .page-status { color: var(--muted); font: 400 12px/1.5 var(--font-mono); }
     .page-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
-    .console-page .page-button { min-width: 38px; min-height: 34px; margin: 0; padding: 0 10px; font-family: var(--font-mono); font-size: 13px; }
+    .console-page .page-button {
+      min-width: 38px; min-height: 34px; margin: 0; padding: 0 10px; font-family: var(--font-mono); font-size: 13px;
+    }
     .console-page .page-button.active { background: var(--ink); color: #fff; box-shadow: none; }
 
     .matrix-wrap { overflow-x: auto; border: var(--line); }
     .matrix-wrap table { width: 100%; min-width: 1080px; }
     .matrix-wrap th { text-align: right; white-space: normal; vertical-align: bottom; }
-    .matrix-wrap th:first-child, .matrix-wrap td:first-child { text-align: left; font-weight: 700; white-space: nowrap; }
+    .matrix-wrap th:first-child, .matrix-wrap td:first-child {
+      text-align: left; font-weight: 700; white-space: nowrap;
+    }
     .matrix-wrap tbody tr:hover td { background: var(--sky-soft); }
     .matrix-wrap tbody tr:last-child td { border-bottom: 0; }
     .matrix-wrap tr.best-row td { background: var(--lime-soft); font-weight: 700; }
-    .table-number { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .table-number {
+      text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap;
+    }
 
     .console-page .case-picker { max-width: min(560px, 100%); font-weight: 700; }
     .case-meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
-    .console-page .chip { min-height: 0; padding: 2px 10px; background: var(--lime-soft); box-shadow: none; font: 700 12px/1.6 var(--font-mono); white-space: normal; }
+    .console-page .chip {
+      min-height: 0; padding: 2px 10px; background: var(--lime-soft); box-shadow: none;
+      font: 700 12px/1.6 var(--font-mono); white-space: normal;
+    }
     .console-page .chip.bad { background: var(--pink); }
     .strategy-grid { display: grid; grid-template-columns: repeat(4, minmax(240px, 1fr)); gap: 16px; }
     .strategy-card { min-width: 0; border: var(--line); background: var(--surface); box-shadow: var(--shadow); }
@@ -121,11 +169,19 @@
     .evidence-rank { font: 700 11px/1.5 var(--font-mono); }
     .evidence-title { display: block; margin: 4px 0; font-size: 13px; font-weight: 700; }
     .evidence-path { color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
-    .evidence-answer { margin: 8px 0 0; padding-top: 8px; border-top: 2px solid var(--rule); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; font-size: 12px; }
+    .evidence-answer {
+      margin: 8px 0 0; padding-top: 8px; border-top: 2px solid var(--rule); white-space: pre-wrap;
+      overflow-wrap: anywhere; line-height: 1.6; font-size: 12px;
+    }
     .evidence-answer strong { display: block; margin-bottom: 4px; }
-    .answer { margin-top: 12px; padding: 10px 12px; border: var(--line); background: var(--bg); white-space: pre-wrap; line-height: 1.6; font-size: 13px; }
+    .answer {
+      margin-top: 12px; padding: 10px 12px; border: var(--line); background: var(--bg); white-space: pre-wrap;
+      line-height: 1.6; font-size: 13px;
+    }
 
-    .console-page .rerun-panel { display: flex; align-items: center; justify-content: space-between; gap: 20px; background: var(--amber-soft); }
+    .console-page .rerun-panel {
+      display: flex; align-items: center; justify-content: space-between; gap: 20px; background: var(--amber-soft);
+    }
     .rerun-panel h2 { margin: 0; }
     .rerun-panel p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
     .empty { padding: 28px; color: var(--muted); text-align: center; font-weight: 700; }
@@ -133,7 +189,10 @@
     .console-page .empty-state { box-shadow: var(--shadow-pink); }
     .empty-state h2 { margin: 0 0 8px; }
     .empty-state p { margin: 0 0 12px; color: var(--muted); }
-    .empty-state code { display: inline-block; padding: 6px 10px; border: var(--line); background: var(--bg); font: 13px/1.5 var(--font-mono); overflow-wrap: anywhere; }
+    .empty-state code {
+      display: inline-block; padding: 6px 10px; border: var(--line); background: var(--bg);
+      font: 13px/1.5 var(--font-mono); overflow-wrap: anywhere;
+    }
     .empty-state[hidden], body.report-missing .report-only { display: none; }
 
     @media (max-width: 1100px) {
@@ -331,7 +390,8 @@
     };
     const GENERATION_HELP = {
       answer_coverage: "评估对象：模型生成的最终答案，不是召回材料。裁判模型逐个判断标准要点是否被回答覆盖；每题为覆盖要点数 ÷ 标准要点数，再对成功评分的可回答题求平均。失败或未运行的题不计入分母。",
-      faithfulness: "评估对象：混合 + Rerank 的最终答案。裁判模型核查回答中的事实是否得到本次引用知识块支持，再对成功核查的可回答题求平均；明确拒答按规则记 1。其他三路线未执行此核查。“没答全”与“编造”是不同问题。",
+      faithfulness: "评估对象：混合 + Rerank 的最终答案。裁判模型核查回答中的事实是否得到本次引用知识块支持，"
+        + "再对成功核查的可回答题求平均；明确拒答按规则记 1。其他三路线未执行此核查。“没答全”与“编造”是不同问题。",
     };
 
     // Question counts come from the report itself, so copy stays right when the dataset grows.
@@ -403,7 +463,8 @@
         ? "旧报告未记录"
         : run.generation_enabled === false
           ? "本次只评检索，未运行答案检查"
-          : `生成答案：${run.generation_failed} 题\n检查答案要点：${run.coverage_failed ?? 0} 题\n核查事实依据：${run.faithfulness_failed ?? 0} 题`;
+          : `生成答案：${run.generation_failed} 题\n检查答案要点：${run.coverage_failed ?? 0} 题\n`
+            + `核查事实依据：${run.faithfulness_failed ?? 0} 题`;
       const savedIssues = run.ledger_failed == null
         ? "旧报告未记录"
         : run.generation_enabled === false || !judgedRows.length
@@ -436,7 +497,8 @@
           const value = scoredMetric(strategy, bucket, selectedMetric);
           const bar = element("div", "bucket-bar");
           bar.style.height = `${Math.max(1, (value ?? 0) * 100)}%`;
-          bar.title = `${STRATEGY_LABELS[strategy]} · ${METRIC_NAMES[selectedMetric]}：${value == null ? "未评测" : value.toFixed(3)}`;
+          bar.title = `${STRATEGY_LABELS[strategy]} · ${METRIC_NAMES[selectedMetric]}：`
+            + `${value == null ? "未评测" : value.toFixed(3)}`;
           bar.appendChild(element("b", "", value == null ? "—" : value.toFixed(2)));
           bars.appendChild(bar);
         }
@@ -444,9 +506,11 @@
         return group;
       }));
       const ranked = STRATEGIES.filter((strategy) => scoredMetric(strategy, "overall", selectedMetric) != null)
-        .sort((left, right) => scoredMetric(right, "overall", selectedMetric) - scoredMetric(left, "overall", selectedMetric));
+        .sort((left, right) => scoredMetric(right, "overall", selectedMetric)
+          - scoredMetric(left, "overall", selectedMetric));
       retrievalReading.textContent = ranked.length
-        ? `读图：${STRATEGY_LABELS[ranked[0]]} 的总体${METRIC_NAMES[selectedMetric]}最高。各题型柱下标注题数；总体按全部 ${caseCounts().answerable} 道可回答题计算，不含 ${caseCounts().refusal} 道库外题。`
+        ? `读图：${STRATEGY_LABELS[ranked[0]]} 的总体${METRIC_NAMES[selectedMetric]}最高。各题型柱下标注题数；`
+          + `总体按全部 ${caseCounts().answerable} 道可回答题计算，不含 ${caseCounts().refusal} 道库外题。`
         : "本轮未记录这个指标；空值不代表 0 分。";
       document.querySelectorAll(".metric-tab").forEach((button) => {
         button.classList.toggle("active", button.dataset.metric === selectedMetric);
@@ -457,7 +521,8 @@
       const generationEnabled = report.run?.generation_enabled !== false;
       const generated = reportGeneratedStrategies();
       const allStrategiesGenerated = STRATEGIES.every((strategy) => generated.has(strategy));
-      const showComparison = generationEnabled && allStrategiesGenerated && hasSemanticCoverage() && selectedGenerationMetric === "answer_coverage";
+      const showComparison = generationEnabled && allStrategiesGenerated && hasSemanticCoverage()
+        && selectedGenerationMetric === "answer_coverage";
       generationChart.hidden = !showComparison;
       productionBreakdown.hidden = !generationEnabled || showComparison;
       generationMetricHelp.textContent = GENERATION_HELP[selectedGenerationMetric];
@@ -494,7 +559,8 @@
             const value = scoredMetric(strategy, bucket, "answer_coverage");
             const bar = element("div", "bucket-bar");
             bar.style.height = `${Math.max(1, (value ?? 0) * 100)}%`;
-            bar.title = `${STRATEGY_LABELS[strategy]} · ${METRIC_NAMES.answer_coverage}：${value == null ? "未评测" : value.toFixed(3)}`;
+            bar.title = `${STRATEGY_LABELS[strategy]} · ${METRIC_NAMES.answer_coverage}：`
+              + `${value == null ? "未评测" : value.toFixed(3)}`;
             bar.appendChild(element("b", "", value == null ? "—" : value.toFixed(2)));
             bars.appendChild(bar);
           }
@@ -511,7 +577,8 @@
         if (selectedGenerationMetric === "answer_coverage") fill.className = "answer-coverage";
         fill.style.width = value == null ? "0%" : percent(value);
         track.appendChild(fill);
-        row.append(element("span", "", `${label}（${caseCounts().byBucket[bucket] || 0} 题）`), track, element("span", "", value == null ? "—" : value.toFixed(2)));
+        row.append(element("span", "", `${label}（${caseCounts().byBucket[bucket] || 0} 题）`), track,
+          element("span", "", value == null ? "—" : value.toFixed(2)));
         return row;
       }));
       document.querySelectorAll("[data-generation-metric]").forEach((button) => {
@@ -525,8 +592,10 @@
       if (row.faithful === false) kinds.push("hallucination");
       if (row.expected_answerable !== false && Number(row.evidence_coverage ?? 1) < 1) kinds.push("evidence");
       const answerCoverage = row.coverage_status == null ? row.answer_completeness : row.answer_coverage;
-      if (generationEnabled && row.generation_status !== "failed" && row.answer && row.expected_answerable !== false && !row.refused && Number(answerCoverage ?? 1) < 1) kinds.push("completeness");
-      if (generationEnabled && row.refused != null && ((row.expected_answerable !== false && row.refused) || (row.expected_answerable === false && !row.refused))) kinds.push("refusal");
+      if (generationEnabled && row.generation_status !== "failed" && row.answer && row.expected_answerable !== false
+        && !row.refused && Number(answerCoverage ?? 1) < 1) kinds.push("completeness");
+      if (generationEnabled && row.refused != null && ((row.expected_answerable !== false && row.refused)
+        || (row.expected_answerable === false && !row.refused))) kinds.push("refusal");
       return kinds;
     }
 
@@ -576,8 +645,10 @@
         ["refusal", "拒答判断错误"],
       ];
       issueFilters.replaceChildren(...filters.map(([key, label]) => {
-        const count = key === "all" ? allIssues.length : allIssues.filter((row) => issueKinds(row).includes(key)).length;
-        const button = element("button", `issue-filter${selectedIssueFilter === key ? " active" : ""}`, `${label} ${count}`);
+        const count = key === "all" ? allIssues.length
+          : allIssues.filter((row) => issueKinds(row).includes(key)).length;
+        const button = element("button", `issue-filter${selectedIssueFilter === key ? " active" : ""}`,
+          `${label} ${count}`);
         button.type = "button";
         button.dataset.issueFilter = key;
         return button;
@@ -593,7 +664,11 @@
       const flagged = allIssues.filter((row) => row.faithful === false);
       const reviewed = flagged.map((row) => faithReviews.get(row.case_id)).filter((state) => state?.available);
       const statusCount = (status) => reviewed.filter((state) => state.status === status).length;
-      reviewNotice.textContent = reviewLoadError || `仅 ${flagged.length} 道事实依据问题可人工处置：未解决 ${statusCount("未解决")}、已解决 ${statusCount("已解决")}、无需解决 ${statusCount("无需解决")}${reviewed.length < flagged.length ? `；另有 ${flagged.length - reviewed.length} 道记录与报告未匹配，暂不可提交` : ""}。原始模型分数不变。`;
+      reviewNotice.textContent = reviewLoadError
+        || `仅 ${flagged.length} 道事实依据问题可人工处置：未解决 ${statusCount("未解决")}、`
+          + `已解决 ${statusCount("已解决")}、无需解决 ${statusCount("无需解决")}`
+          + `${reviewed.length < flagged.length ? `；另有 ${flagged.length - reviewed.length} 道记录与报告未匹配，暂不可提交` : ""}`
+          + "。原始模型分数不变。";
       issueList.replaceChildren(...pageIssues.map((row) => {
         const card = element("details", "issue");
         card.open = row.case_id === expandedCaseId;
@@ -605,12 +680,15 @@
         }
         const body = element("div", "issue-body");
         body.append(
-          element("p", "", `${METRIC_NAMES.evidence_coverage}：${percent(row.evidence_coverage)}；${METRIC_NAMES.answer_coverage}：${percent(row.answer_coverage)}；${METRIC_NAMES.faithfulness}：${percent(row.faithfulness)}`),
+          element("p", "", `${METRIC_NAMES.evidence_coverage}：${percent(row.evidence_coverage)}；`
+            + `${METRIC_NAMES.answer_coverage}：${percent(row.answer_coverage)}；`
+            + `${METRIC_NAMES.faithfulness}：${percent(row.faithfulness)}`),
           element("p", "", `回答事实依据核查理由：${row.faithfulness_reason || "本题未给出理由或未执行核查"}`),
           element("div", "answer", row.answer || (row.refused ? "本题已拒答" : "没有生成答案")),
         );
         const citationCount = (row.citations || []).length;
-        body.appendChild(element("p", "", `证据链：召回 ${citationCount} 条，Ground Truth ${(row.relevant_chunk_ids || []).join(", ") || "无（库外题）"}`));
+        body.appendChild(element("p", "",
+          `证据链：召回 ${citationCount} 条，Ground Truth ${(row.relevant_chunk_ids || []).join(", ") || "无（库外题）"}`));
         if (row.faithful === false) body.appendChild(faithReviewBox(row));
         const actions = element("div", "issue-actions");
         const inspect = element("button", "mini-button", "查看四路证据");
@@ -629,7 +707,8 @@
       const status = element(
         "span",
         "page-status",
-        `第 ${selectedIssuePage} / ${totalPages} 页 · ${pageStart + 1}-${Math.min(pageStart + ISSUE_PAGE_SIZE, issues.length)} / ${issues.length} 条`,
+        `第 ${selectedIssuePage} / ${totalPages} 页 · `
+          + `${pageStart + 1}-${Math.min(pageStart + ISSUE_PAGE_SIZE, issues.length)} / ${issues.length} 条`,
       );
       const buttons = element("div", "page-buttons");
       const previous = element("button", "page-button", "上一页");
@@ -656,7 +735,8 @@
     function renderFullTable() {
       const bestMrr = Math.max(...STRATEGIES.map((strategy) => Number(report.strategies?.[strategy]?.mrr || 0)));
       const generatedStrategies = reportGeneratedStrategies();
-      const metricCell = (value, blank = false, asPercent = false) => element("td", "table-number", blank || value == null ? "—" : asPercent ? `${(Number(value) * 100).toFixed(2)}%` : Number(value).toFixed(3));
+      const metricCell = (value, blank = false, asPercent = false) => element("td", "table-number",
+        blank || value == null ? "—" : asPercent ? `${(Number(value) * 100).toFixed(2)}%` : Number(value).toFixed(3));
       summaryTable.replaceChildren(...STRATEGIES.map((strategy) => {
         const values = report.strategies?.[strategy] || {};
         const generated = generatedStrategies.has(strategy);
@@ -678,10 +758,14 @@
         );
         return row;
       }));
-      const productionBuckets = ANSWERABLE_BUCKETS.map(([bucket, label]) => [label, scoredMetric("hybrid_rerank", bucket, "mrr")])
+      const productionBuckets = ANSWERABLE_BUCKETS
+        .map(([bucket, label]) => [label, scoredMetric("hybrid_rerank", bucket, "mrr")])
         .filter(([, value]) => value != null);
       const lowest = productionBuckets.sort((left, right) => left[1] - right[1])[0];
-      tableReading.textContent = `绿色行仅标记总体 MRR 最高路线，不代表所有指标都最好。${lowest ? `混合 + Rerank 最弱检索分桶为${lowest[0]}（MRR ${lowest[1].toFixed(3)}）。` : "本轮没有可比较的检索分桶。"}召回材料与最终答案是两个不同评估对象；库外正确拒答率分母是 ${caseCounts().refusal} 道库外题，库内误拒答率分母是 ${caseCounts().answerable} 道可回答题。`;
+      tableReading.textContent = "绿色行仅标记总体 MRR 最高路线，不代表所有指标都最好。"
+        + `${lowest ? `混合 + Rerank 最弱检索分桶为${lowest[0]}（MRR ${lowest[1].toFixed(3)}）。` : "本轮没有可比较的检索分桶。"}`
+        + `召回材料与最终答案是两个不同评估对象；库外正确拒答率分母是 ${caseCounts().refusal} 道库外题，`
+        + `库内误拒答率分母是 ${caseCounts().answerable} 道可回答题。`;
     }
 
     function renderSummary() {
@@ -706,13 +790,15 @@
       const cards = [
         [`最佳整体 MRR · ${STRATEGY_LABELS[bestStrategy]}`, bestMrr.toFixed(3), "四条路线中，总体证据排序最高。"],
         ["库内误拒答率", generationEnabled ? falseRefusalRate : "未运行",
-          answerableRows.length ? `${refusedAnswerable}/${answerableRows.length} 道可回答题被错误拒绝；越低越好。` : "可回答题被错误拒绝的比例；越低越好。"],
+          answerableRows.length ? `${refusedAnswerable}/${answerableRows.length} 道可回答题被错误拒绝；越低越好。`
+            : "可回答题被错误拒绝的比例；越低越好。"],
         ["库外问题拒答", generationEnabled ? percent(production.refusal_accuracy) : "未运行",
           refusalRows.length ? `${correctlyRefused}/${refusalRows.length} 道库外题正确拒绝；越高越好。` : "知识库没有答案时正确拒绝的比例；越高越好。"],
       ];
       metrics.replaceChildren(...cards.map(([name, value, hint]) => {
         const card = element("article", "metric");
-        card.append(element("span", "metric-name", name), element("strong", "metric-value", value), element("small", "metric-hint", hint));
+        card.append(element("span", "metric-name", name), element("strong", "metric-value", value),
+          element("small", "metric-hint", hint));
         return card;
       }));
 
@@ -751,7 +837,8 @@
       meta.append(
         element("span", "chip", `类型 ${base.query_type}`),
         element("span", "chip", `难度 ${base.difficulty}`),
-        element("span", "chip", `按章节与标准要点自动匹配 ${base.relevant_chunk_ids.length} 块：${base.relevant_chunk_ids.join(", ") || "无（库外问题）"}`),
+        element("span", "chip", `按章节与标准要点自动匹配 ${base.relevant_chunk_ids.length} 块：`
+          + `${base.relevant_chunk_ids.join(", ") || "无（库外问题）"}`),
       );
       caseSummary.append(title, meta);
 
@@ -768,14 +855,17 @@
         }
         const generatedAnswer = Boolean(row.answer);
         const rowMetrics = element("div", "coverage");
-        const answerCoverage = !generatedAnswer ? "未运行" : hasSemanticCoverage() ? percent(row.answer_coverage) : "旧报告未评测";
-        const factChecked = row.faithfulness_status === "completed" || (row.faithfulness_status == null && row.faithful != null && generatedAnswer);
+        const answerCoverage = !generatedAnswer ? "未运行"
+          : hasSemanticCoverage() ? percent(row.answer_coverage) : "旧报告未评测";
+        const factChecked = row.faithfulness_status === "completed"
+          || (row.faithfulness_status == null && row.faithful != null && generatedAnswer);
         const metricLines = [
           `前 5 条必需证据组命中率（Recall@5）：${percent(row.recall_at_k)}`,
           `必需证据组平均倒数排名（RR）：${row.reciprocal_rank == null ? "未评测" : Number(row.reciprocal_rank).toFixed(3)}`,
           `${METRIC_NAMES.evidence_coverage}：${percent(row.evidence_coverage)}`,
           `${METRIC_NAMES.answer_coverage}：${answerCoverage}`,
-          `${METRIC_NAMES.faithfulness}：${factChecked ? percent(row.faithfulness) : row.faithfulness_status === "failed" ? "核查失败" : "未运行"}`,
+          `${METRIC_NAMES.faithfulness}：`
+            + `${factChecked ? percent(row.faithfulness) : row.faithfulness_status === "failed" ? "核查失败" : "未运行"}`,
         ];
         rowMetrics.replaceChildren(...metricLines.map((line) => element("span", "", line)));
         body.appendChild(rowMetrics);
@@ -789,7 +879,8 @@
             document.createTextNode(String(source.answer || "").trim() || "该知识块没有回答正文"),
           );
           item.append(
-            element("span", "evidence-rank", `#${source.n} · chunk ${source.chunk_id}${relevant.has(source.chunk_id) ? " · 命中 GT" : ""}`),
+            element("span", "evidence-rank",
+              `#${source.n} · chunk ${source.chunk_id}${relevant.has(source.chunk_id) ? " · 命中 GT" : ""}`),
             element("strong", "evidence-title", source.question || "未标问题"),
             element("span", "evidence-path", source.section_path || "未标章节"),
             chunkAnswer,
@@ -798,7 +889,8 @@
         }
         if (!list.children.length) list.appendChild(element("li", "evidence", "没有召回证据"));
         body.appendChild(list);
-        const answer = element("div", "answer", row.answer || (row.generation_status === "failed" ? `生成答案时出错：${row.generation_error || "原因未记录"}` : "没有生成答案"));
+        const answer = element("div", "answer", row.answer || (row.generation_status === "failed"
+          ? `生成答案时出错：${row.generation_error || "原因未记录"}` : "没有生成答案"));
         answer.prepend(element("strong", "", row.refused ? "明确拒答\n" : "生成答案\n"));
         body.appendChild(answer);
         body.appendChild(element(
@@ -832,7 +924,8 @@
       }));
       if (casePicker.value) renderCase(casePicker.value);
       const caseCount = report.dataset?.total_cases || groups.size;
-      const base = `已加载 ${caseCount} 道独立题，${report.cases?.length || 0} 条策略结果（${Object.keys(report.strategies || {}).length} 路 × ${caseCount} 题）。`;
+      const base = `已加载 ${caseCount} 道独立题，${report.cases?.length || 0} 条策略结果`
+        + `（${Object.keys(report.strategies || {}).length} 路 × ${caseCount} 题）。`;
       if (report.dataset_alignment?.status === "stale") {
         setStatus(
           `当前评测题已修改，页面显示的是旧题目的历史分数（至少 ${report.dataset_alignment.changed_cases} 题标注已变）；请重新运行评估后再据此验收。`,
