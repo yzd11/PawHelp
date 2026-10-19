@@ -11,6 +11,14 @@ models, datasets, documents, trademarks, or external services.
   `app/static/vendor/dompurify-LICENSE.txt` and `dompurify-LICENSE-MPL.txt`.
 - Source links, exact versions and file hashes are in `app/static/vendor/README.md`.
 
+## Project data
+
+The knowledge documents in `knowledge/`, the evaluation sets in `evals/` and the
+topic-classifier training questions (not committed; see `scripts/topics/`) were
+generated with AI assistance for this project. They contain no real customer data
+and no third-party datasets.
+Products, model numbers and policies in them are fictional.
+
 ## External models and data
 
 The RoBERTa classifier, BGE embedding/reranking models and upstream chat services

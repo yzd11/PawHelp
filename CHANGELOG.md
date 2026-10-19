@@ -21,6 +21,8 @@
   four strategies by query type.
 - Knowledge flywheel: low-confidence questions are normalized, deduplicated,
   reviewed by an operator and written back to the knowledge base.
+- Review page shows evidence-gate refusals as a sentence with score and threshold,
+  not the stored confidence JSON.
 
 ### Tools
 

@@ -51,6 +51,23 @@ def processing_failure(pool_id, error):
     return {"pool_id": pool_id, "code": code, "message": message}
 
 
+def readable_reason(reason):
+    # The retrieval gate stores its confidence dict as JSON; reviewers need the sentence and the score.
+    try:
+        data = json.loads(reason)
+    except (TypeError, ValueError):
+        return reason
+    if not isinstance(data, dict):
+        return reason
+    text = str(data.get("reason") or "检索证据不足")
+    signals = data.get("signals")
+    score = signals.get("score") if isinstance(signals, dict) else None
+    threshold = data.get("threshold")
+    if isinstance(score, (int, float)) and isinstance(threshold, (int, float)):
+        text += f"（证据评分 {score:.3f}，阈值 {threshold:.3f}）"
+    return text
+
+
 def queue_fingerprint(rows):
     return hashlib.sha256(json.dumps(
         [(r.id, r.normalized_question, r.review_status) for r in rows], ensure_ascii=False,
@@ -209,7 +226,7 @@ class Flywheel:
                 .order_by(LowConfidenceQuestion.id)))
             chunk = await session.get(KnowledgeChunk, row.published_chunk_id) if row.published_chunk_id else None
             return {**review_view(row, chunk), "originals": [
-                {"id": r.id, "raw_question": r.raw_question, "source": r.source, "reason": r.reason,
+                {"id": r.id, "raw_question": r.raw_question, "source": r.source, "reason": readable_reason(r.reason),
                  "retrieved_chunks": r.retrieved_chunks, "conversation_id": r.conversation_id,
                  "created_at": r.created_at.replace(tzinfo=timezone.utc).isoformat() if r.created_at else None}
                 for r in originals]}
