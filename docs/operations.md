@@ -15,6 +15,13 @@ uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
 
 已安装环境可以直接使用 `./.venv/Scripts/python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000`。所有后台包括 `/topics` 和 `/acceptance` 都在 8000。
 
+`uv.lock` 只记录 pypi.org 和 download.pytorch.org 的下载地址，本地和 CI 共用这一份，不要在 `pyproject.toml` 里加镜像 index。uv 按锁文件里的地址安装，`UV_DEFAULT_INDEX`、`UV_INDEX_URL` 或用户级 `uv.toml` 里配置的镜像（如清华源）不会加速 `uv sync`，反而会让 `--locked` 报锁文件需要更新（uv 0.11.18 实测）。在本仓库执行 uv 命令前先清掉这些变量；国内网络慢时用 `HTTPS_PROXY` 走代理。`uv lock` 同样要在没有镜像变量的环境里运行，否则锁文件会被改写成镜像地址：
+
+```powershell
+Remove-Item Env:UV_DEFAULT_INDEX, Env:UV_INDEX_URL -ErrorAction SilentlyContinue
+uv sync --locked --all-extras
+```
+
 `CHAT_BASE_URL`、`OPENAI_MODEL`、`OPENAI_API_KEY` 配置上游模型。`DATABASE_URL` 是数据库凭据，只留在本地 `.env`。`STRUCTURED_OUTPUT_METHOD` 必须由上游支持。示例数据库默认 Docker 3307，不是系统 MySQL 的默认 3306。
 
 新安装默认业务库与账号均为 `pawhelp`。已有数据库只执行 Alembic 升级，不执行 DROP 或重新 seed。演示数据初始化命令都是显式离线操作：

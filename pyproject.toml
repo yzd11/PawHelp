@@ -37,10 +37,6 @@ classifier = ["transformers==5.17.0", "accelerate==1.15.0"]
 torch = { index = "pytorch-cu130" }
 
 [[tool.uv.index]]
-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
-default = true
-
-[[tool.uv.index]]
 name = "pytorch-cu130"
 url = "https://download.pytorch.org/whl/cu130"
 explicit = true
