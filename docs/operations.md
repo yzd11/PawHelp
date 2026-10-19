@@ -84,10 +84,11 @@ uv run python -m scripts.run_intent_evals --runs 3
 ## 验证与安全
 
 ```powershell
+uv run pytest
 uv run python -m scripts.check_sources
 node scripts/check_frontend.cjs
 ```
 
-以上只检查源码与配置，不访问数据库、不调用模型。完整开发测试已按维护者要求归档移出工作树，当前 CI 不提供功能回归覆盖；涉及业务行为的修改仍须在隔离数据上手动验证并记录结果。
+`pytest` 使用脚本化的假模型和内存检查点，不调用付费模型、不读取本机 `.env`；MySQL 集成测试需要 `TEST_DATABASE_URL` 指向一个已迁移到最新版本的一次性数据库，否则跳过，不要指向业务库 `pawhelp`。后两条只检查源码与配置。CI 运行这三项，不含 MySQL 集成测试。
 
 本机后台控制不是公网认证。服务绑定回环地址，不把 8000/8110 直接暴露互联网。凭据与私人数据不上传 GitHub；先检查历史记录再发布。

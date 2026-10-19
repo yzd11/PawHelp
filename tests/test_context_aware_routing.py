@@ -2,7 +2,7 @@
 import json
 
 import pytest
-from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, ToolMessage
 
 from app.workflow.understanding import (
     IntentDecision, ResolvedQuestion, classify_intent, plan_route, understanding_history,
@@ -52,6 +52,31 @@ async def test_missing_logistics_order_card_resumes_without_reclassification():
     assert [t["name"] for t in resumed[-1].data["tool_trace"]] == ["query_order", "query_logistics"]
     assert search.calls == []
     assert "订单 1001" in str(model.agent_histories[0][-1].content)
+
+
+class PromptFollowingLogisticsModel(ScriptedUnderstandingModel):
+    """Calls query_order first unless its result is already in context, as the system prompt instructs."""
+
+    async def astream(self, messages):
+        self.agent_calls += 1
+        done = {m.name for m in messages if isinstance(m, ToolMessage)}
+        if "query_order" not in done:
+            yield tool_call("query_order", '{"order_id":"1001"}', f"order-{self.agent_calls}")
+        elif "query_logistics" not in done:
+            yield tool_call("query_logistics", '{"tracking_no":"DEMO1001"}', "logistics-1")
+        else:
+            yield AIMessageChunk(content="订单1001已签收。")
+
+
+async def test_order_picked_from_card_is_queried_once_before_logistics():
+    model = PromptFollowingLogisticsModel([{"intent": "物流", "confidence": .95, "task_kind": "progress_query"}])
+    service = InMemoryWorkflow(model, LabelledSearch())
+    events = [e async for e in service.stream_turn(turn("前几天买的东西到哪了"))]
+    assert events[-1].name == "order_selection"
+    resumed = [e async for e in service.resume_order("demo", 1, "1001", 1)]
+    assert resumed[-1].name == "done"
+    assert [t["name"] for t in resumed[-1].data["tool_trace"]] == ["query_order", "query_logistics"]
+    assert model.agent_calls == 2
 
 
 async def test_low_confidence_keeps_business_label_but_clarifies_after_one_review():

@@ -33,6 +33,9 @@
 - Tool registry with JSON-schema validation, timeouts, read-only retries,
   confirmation-gated writes and an audit log.
 - Logistics and after-sales demo services over MCP with an allow-list policy.
+- The order prefetched for a turn reaches the agent as its `query_order` call and
+  result, so a logistics turn no longer queries the same order twice (one model
+  round and one tool call fewer).
 
 ### Operations
 
