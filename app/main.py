@@ -2,7 +2,9 @@
 
 import asyncio
 from contextlib import asynccontextmanager
+import logging
 from pathlib import Path
+import time
 from typing import AsyncIterator
 
 from fastapi import FastAPI
@@ -41,6 +43,20 @@ from app.api.evaluation import (
 
 KNOWLEDGE_DOCUMENTS_PATH = PROJECT_ROOT / "knowledge"
 
+logger = logging.getLogger(__name__)
+
+
+async def warm_knowledge_models(embedder: BgeM3Embedder, reranker: BgeReranker) -> None:
+    """Load BGE weights in the background; a chat arriving earlier waits on the load lock."""
+
+    started = time.perf_counter()
+    try:
+        await asyncio.gather(asyncio.to_thread(embedder.warm), asyncio.to_thread(reranker.warm))
+    except Exception:
+        logger.exception("knowledge model warm-up failed; models load on first query")
+        raise
+    logger.info("knowledge models ready in %.1fs", time.perf_counter() - started)
+
 
 def create_app(
     settings: Settings | None = None,
@@ -49,6 +65,7 @@ def create_app(
     tool_chat_service: ToolAwareChatService | None = None,
     knowledge_admin_service: KnowledgeAdminService | None = None,
     rag_eval_runner: RagEvalRunner | None = None,
+    preload_models: bool = False,
 ) -> FastAPI:
     """Create an initialized API application and its runtime dependencies."""
 
@@ -133,8 +150,13 @@ def create_app(
     pipeline = EvaluationPipeline(active_settings, active_session_factory, PROJECT_ROOT, rag_eval_lock)
     scheduled = ScheduledOperations(active_settings, active_session_factory, flywheel, pipeline)
 
+    warmup: asyncio.Task[None] | None = None
+
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
+        nonlocal warmup
+        if preload_models:
+            warmup = asyncio.create_task(warm_knowledge_models(embedder, reranker))
         try:
             scheduled.start()
             if isinstance(active_tool_chat, WorkflowChatService):
@@ -153,6 +175,8 @@ def create_app(
             else:
                 yield
         finally:
+            if warmup is not None:
+                warmup.cancel()
             await scheduled.close()
             if owned_engine is not None:
                 await owned_engine.dispose()
@@ -184,10 +208,15 @@ def create_app(
 
     @app.get("/health")
     async def health() -> dict[str, str]:
-        return {"status": "ok"}
+        if warmup is None:
+            return {"status": "ok"}
+        if not warmup.done():
+            return {"status": "ok", "knowledge_models": "loading"}
+        failed = warmup.cancelled() or warmup.exception() is not None
+        return {"status": "ok", "knowledge_models": "failed" if failed else "ready"}
 
     return app
 
 
-# Module-level ASGI entry point used by ``uvicorn app.main:app``.
-app = create_app()
+# Module-level ASGI entry point used by ``uvicorn app.main:app``; tests build their own.
+app = create_app(preload_models=True)

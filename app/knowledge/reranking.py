@@ -52,6 +52,12 @@ class BgeReranker:
                     )
         return self._model
 
+    def warm(self) -> None:
+        """Load weights and score one pair so the first query skips CUDA start-up."""
+
+        with self._inference_lock:
+            self._load().compute_score([["预热", "预热"]], normalize=True)
+
     def rerank(
         self, query: str, chunks: Sequence[KnowledgeChunk], *, limit: int
     ) -> list[RerankedChunk]:

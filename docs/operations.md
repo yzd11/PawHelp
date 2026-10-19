@@ -2,7 +2,17 @@
 
 所有命令从仓库根目录执行。Python 3.12；依赖由 `pyproject.toml` 和 `uv.lock` 统一管理。不另建第二个 Python 项目。
 
-## 安装、迁移和主应用
+## 一键启动
+
+```powershell
+uv run --locked python -m scripts.start
+```
+
+依次：`docker compose up -d --wait`（MySQL、etcd、MinIO、Milvus）→ `alembic upgrade head` → 物流 MCP（8101）、售后 MCP（8102）、主题分类器（8110，未训练出 `data/topic-classifier/model` 时跳过）、主应用（8000）。子进程直接用当前虚拟环境的 Python 启动，日志写入 `.runtime/logs/<服务>.log`；某个服务意外退出时打印其日志末尾并停止其余服务。端口已被占用时沿用正在运行的服务。Ctrl+C 停止本脚本启动的进程，容器继续运行（需要时 `docker compose stop`）。`--no-docker`、`--no-mcp`、`--no-classifier` 跳过对应部分。
+
+主应用启动后在后台加载并预热 BGE-M3 与重排模型，页面先可用；`GET /health` 的 `knowledge_models` 为 `loading`、`ready` 或 `failed`。预热完成前到达的提问会等待加载完成，不会重复加载。
+
+## 安装、迁移和主应用（分步）
 
 ```powershell
 uv sync --locked --all-extras
@@ -39,7 +49,7 @@ uv run python -m scripts.vectorize_knowledge
 
 ## MCP 工具（可选）
 
-分别在两个终端启动：
+`scripts.start` 已包含这两个服务；单独启动时分别在两个终端运行：
 
 ```powershell
 uv run python -m mcp_servers.logistics_server

@@ -32,6 +32,11 @@
 
 ### Operations
 
+- `scripts.start` brings up containers, migrations, MCP servers, the topic classifier
+  and the app in one command, and stops them together on Ctrl+C.
+- Faster cold start: retrieval models warm up in the background at startup
+  (first chat 37.5s → 13.2s) and the text-splitter import no longer
+  loads sentence-transformers (import 27s → 7s).
 - Admin pages for knowledge, RAG evaluation, review, cost/observability and topics.
 - Self-hosted Langfuse export; token usage and estimated cost per intent.
 - Offline 17-label topic classifier (RoBERTa-wwm-ext) for the question pool.

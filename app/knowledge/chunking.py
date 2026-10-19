@@ -3,11 +3,6 @@
 from dataclasses import dataclass
 import re
 
-from langchain_text_splitters import (
-    MarkdownHeaderTextSplitter,
-    RecursiveCharacterTextSplitter,
-)
-
 
 _HEADERS = [("#" * level, f"h{level}") for level in range(1, 7)]
 _SENTENCE_ENDS = "。！？；.!?;"
@@ -105,6 +100,8 @@ def _split_prose(text: str, chunk_size: int, chunk_overlap: int) -> list[str]:
     if len(text) <= chunk_size:
         return [text.strip()]
     body_size = max(1, chunk_size - chunk_overlap)
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=body_size,
         chunk_overlap=0,
@@ -149,6 +146,9 @@ def chunk_markdown(
 
     if chunk_size <= 0 or chunk_overlap < 0 or chunk_overlap >= chunk_size:
         raise ValueError("chunk_size must be positive and exceed chunk_overlap")
+    # The package __init__ imports sentence-transformers (~16s); keep it off app start-up.
+    from langchain_text_splitters import MarkdownHeaderTextSplitter
+
     splitter = MarkdownHeaderTextSplitter(
         headers_to_split_on=_HEADERS,
         strip_headers=True,

@@ -74,10 +74,10 @@ uv run alembic upgrade head
 uv run python -m scripts.seed_db
 uv run python -m scripts.ingest_knowledge
 uv run python -m scripts.vectorize_knowledge
-uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
+uv run --locked python -m scripts.start
 ```
 
-打开 <http://127.0.0.1:8000/> 聊天，<http://127.0.0.1:8000/admin> 进入后台。首次运行会下载 BGE 模型权重，有 NVIDIA GPU 时自动使用 CUDA。MCP 工具服务需另开终端启动，或在 `.env` 设置 `MCP_ENABLED=false`，详见[运行说明](docs/operations.md)。
+`scripts.start` 一条命令启动容器、执行迁移，并拉起物流/售后 MCP 服务、主题分类器（有模型时）和主应用，就绪后打印地址；Ctrl+C 停止它启动的全部进程。打开 <http://127.0.0.1:8000/> 聊天，<http://127.0.0.1:8000/admin> 进入后台。首次运行会下载 BGE 模型权重，有 NVIDIA GPU 时自动使用 CUDA；应用启动后在后台预热检索模型，第一句提问不再等模型加载。分步启动见[运行说明](docs/operations.md)。
 
 | 页面 | 路径 | 用途 |
 |---|---|---|

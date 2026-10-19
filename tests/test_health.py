@@ -1,3 +1,10 @@
+from pathlib import Path
+import subprocess
+import sys
+import threading
+import time
+
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -110,3 +117,35 @@ def test_supplied_session_factory_does_not_create_or_dispose_an_engine(
 
     assert response.status_code == 200
     assert session_factory.calls == 0
+
+
+def test_uvicorn_start_up_does_not_import_sentence_transformers() -> None:
+    # langchain_text_splitters' package import pulls in sentence-transformers (~16s on start-up).
+    code = "import sys, app.main; sys.exit('sentence_transformers' in sys.modules)"
+    assert subprocess.run([sys.executable, "-c", code], cwd=Path(__file__).parents[1]).returncode == 0
+
+
+@pytest.mark.parametrize("fails", [False, True])
+def test_preloaded_knowledge_models_report_loading_then_outcome(monkeypatch, fails) -> None:
+    release, warmed = threading.Event(), []
+
+    def embedder_warm(self) -> None:
+        release.wait(5)
+        if fails:
+            raise RuntimeError("CUDA out of memory")
+        warmed.append("embedder")
+
+    monkeypatch.setattr(main_module.BgeM3Embedder, "warm", embedder_warm)
+    monkeypatch.setattr(main_module.BgeReranker, "warm", lambda self: warmed.append("reranker"))
+    app = create_app(settings=make_settings(), model=NeverCalledModel(),
+                     session_factory=NeverCalledSessionFactory(), preload_models=True)
+    with TestClient(app) as client:
+        assert client.get("/health").json() == {"status": "ok", "knowledge_models": "loading"}
+        release.set()
+        for _ in range(100):
+            body = client.get("/health").json()
+            if body["knowledge_models"] != "loading":
+                break
+            time.sleep(0.05)
+    assert body == {"status": "ok", "knowledge_models": "failed" if fails else "ready"}
+    assert sorted(warmed) == (["reranker"] if fails else ["embedder", "reranker"])

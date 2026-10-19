@@ -43,6 +43,11 @@ class BgeM3Embedder:
                     )
         return self._model
 
+    def warm(self) -> None:
+        """Load weights and encode once so the first query skips CUDA start-up."""
+
+        self.embed(["预热"])
+
     def embed(self, texts: Sequence[str]) -> list[list[float]]:
         """Encode text into BGE-M3's 1024-dimensional dense representation."""
 
