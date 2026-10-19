@@ -95,7 +95,10 @@ async def test_two_mcp_processes_owned_data_dynamic_discovery_and_permission(tmp
         assert stream[-1].name == "done" and model.agent_calls == 3
         trace = stream[-1].data["tool_trace"]
         assert trace[1]["source"] == "mcp" and trace[1]["mcp_server"] == "logistics"
-        assert "delivered" in model.agent_histories[-1][-1].content
+        observed = model.agent_histories[-1][-1].content
+        assert "delivered" in observed
+        # Tracking times reach the model already local, so it never does timezone arithmetic.
+        assert "2026/09/28 01:51:00（香港/北京时间）" in observed and "17:51" not in observed
         await service.close()
         stop(processes[0])
         processes[0] = start("mcp_servers.logistics_server", env, extended=True)

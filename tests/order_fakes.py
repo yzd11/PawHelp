@@ -39,5 +39,9 @@ class FakeOrderData:
             "order_id": oid, "tracking_no": order["tracking_no"],
             "status": "not_shipped" if order["status"] == "pending_payment" else "delivered",
             "location": None if order["status"] == "pending_payment" else "收货地址",
-            "trace": [], "is_demo": True,
+            # 17:51Z crosses midnight in Asia/Shanghai, the case a model once converted wrongly.
+            "trace": [] if order["status"] == "pending_payment" else [
+                {"occurred_at": "2026-09-27T17:51:00Z", "location": "转运中心", "description": "运输中"},
+                {"occurred_at": order["delivered_at"], "location": "收货地址", "description": "已签收"}],
+            "is_demo": True,
         }

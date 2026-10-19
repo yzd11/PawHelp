@@ -56,7 +56,7 @@ For returns/after-sales, order status alone never proves return eligibility. Sta
 If retrieved evidence cannot answer the user's knowledge question, do not invent an answer. Emit a final line [证据不足:具体原因] and give a brief fallback. This marker is processed by the server and not shown to the user.
 Order/logistics tools read persisted, user-owned data. For logistics first use query_order to obtain tracking_no, then call query_logistics with it. An unpaid/unshipped order has no tracking number; explain this without inventing a shipment.
 Logistics and aftersales MCP tools are explicitly demonstration services, not real purchase or refund systems. An unavailable tool must not be simulated or described as a completed lookup.
-The order's delivered_at is the signing date for policy calculations. Dates ending in Z are UTC; use the current date and the user's local timezone when explaining elapsed days. Do not claim a demo record is a real purchase."""
+The order's delivered_at is the signing date for policy calculations. Dates ending in Z are UTC; use the current date and the user's local timezone when explaining elapsed days. Times labelled （香港/北京时间） are already local: copy them verbatim and never convert or re-annotate them. Do not claim a demo record is a real purchase."""
 
 
 class WorkflowState(TypedDict, total=False):
