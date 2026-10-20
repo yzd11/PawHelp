@@ -27,6 +27,11 @@
   benchmark rows and the evidence-gate calibration were updated with it. The
   96 labelled cases were re-collected locally and re-reviewed; the threshold (0.127)
   and its independent validation result are unchanged.
+- The four product manuals name the series they cover in their title, so every
+  section chunk carries it; a model-specific question such as "MH-FD30 的录音呼唤
+  最长能录多久" is no longer refused for evidence that does not name the model. The
+  separate "本篇适用于" intro chunks were dropped (101 → 97 document chunks) and the
+  calibration was re-collected; the threshold (0.127) still passes validation.
 
 ### Tools
 

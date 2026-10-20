@@ -36,7 +36,7 @@ def test_benchmark_scope_excludes_retained_manual_history() -> None:
 
     allowed = validate_evaluation_corpus(rows)
 
-    assert len(allowed) == 101
+    assert len(allowed) == 97
     assert 1000 not in allowed
     assert build_filter_expression([], [], allowed).startswith('id in ["1","2"')
 

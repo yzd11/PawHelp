@@ -1,5 +1,7 @@
 """Knowledge document ingestion through its public chunking seam."""
 
+from pathlib import Path
+
 from app.knowledge.chunking import chunk_markdown
 
 
@@ -42,3 +44,12 @@ def test_markdown_becomes_self_contained_structured_knowledge_chunks() -> None:
     assert sum("| 支付方式 | 到账时间 |" in chunk.answer for chunk in table_chunks) == len(
         table_chunks
     )
+
+
+def test_every_manual_section_names_the_products_it_covers() -> None:
+    # A section chunk is checked alone; without the product series a model-specific question is refused.
+    manuals = Path(__file__).parents[1] / "knowledge" / "manuals"
+    for name in ("feeder-guide", "fountain-care", "litter-box-care", "camera-guide"):
+        path = manuals / f"{name}.md"
+        chunks = chunk_markdown(path.read_text(encoding="utf-8"), content_type="manual")
+        assert chunks and all("MH-" in chunk.category for chunk in chunks), path.name
