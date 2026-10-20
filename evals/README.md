@@ -77,3 +77,17 @@ uv run python -m scripts.run_intent_evals --runs 3
 
 只调用意图识别，不需要数据库、Milvus 或启动服务；全部通过返回 0。这组题只覆盖单轮、
 无历史的问法，多轮指代由离线回归测试覆盖。
+
+## 知识写入冲突检查评测集
+
+`knowledge_consistency_cases.jsonl` 共 20 条候选知识，标签为 `block`（与已有知识重复或冲突，
+应拒绝写入）或 `new`（可以写入）：3 条重复、5 条与文档冲突、5 条文档未涉及，另有 7 条是
+曾经混入知识库、已清理的人工或挖掘条目。改 `KNOWLEDGE_CONSISTENCY_SYSTEM_TEMPLATE` 后要先跑：
+
+```powershell
+uv run python -m scripts.run_consistency_evals --repeats 2
+```
+
+每条用本地检索加一次模型调用，需要 MySQL 和 Milvus，不写知识库。除判定外还检查拒绝理由：
+须为中文、只引用真实存在的知识编号、不出现“第 1 条”这类位置编号。标签以 `knowledge/`
+文档为准，并假设知识库里没有另一条重复候选的人工条目；知识库变化后要重新审核标签，不能改标签迁就结果。
