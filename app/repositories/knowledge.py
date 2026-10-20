@@ -167,6 +167,16 @@ class KnowledgeRepository:
         )
         return list(rows)
 
+    async def list_kept_entries(self) -> list[KnowledgeChunk]:
+        """List entries a Markdown rebuild keeps: manual, approved and mined knowledge."""
+
+        rows = await self._session.scalars(
+            select(KnowledgeChunk)
+            .where(KnowledgeChunk.source_kind.not_in(("markdown", "faq_table")))
+            .order_by(KnowledgeChunk.id)
+        )
+        return list(rows)
+
     async def mark_pending(self, rows: Sequence[KnowledgeChunk]) -> None:
         """Hide stale vectors from retrieval before replacing or deleting them."""
 

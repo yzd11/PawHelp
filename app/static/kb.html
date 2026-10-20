@@ -93,7 +93,7 @@
     .console-page .page-size select { width: auto; min-width: 72px; padding: 6px 8px; }
     .empty { padding: 24px; border: 2px dashed var(--ink); background: var(--bg); color: var(--muted); text-align: center; font-weight: 700; }
 
-    .toast { position: fixed; right: 24px; bottom: 24px; z-index: 40; max-width: min(440px, calc(100vw - 48px)); padding: 14px 18px; border: var(--line); background: var(--lime-soft); box-shadow: var(--shadow-lg); font-weight: 700; }
+    .toast { position: fixed; right: 24px; bottom: 24px; z-index: 40; max-width: min(440px, calc(100vw - 48px)); padding: 14px 18px; border: var(--line); background: var(--lime-soft); box-shadow: var(--shadow-lg); font-weight: 700; white-space: pre-line; }
     .toast.error { background: var(--pink-soft); color: var(--danger); box-shadow: var(--shadow-pink); }
     .hidden { display: none !important; }
 
@@ -262,12 +262,12 @@
     let editingId = null;
     let toastTimer = null;
 
-    function showToast(message, error = false) {
+    function showToast(message, error = false, duration = 4200) {
       clearTimeout(toastTimer);
       toast.textContent = message;
       toast.classList.toggle("error", error);
       toast.classList.remove("hidden");
-      toastTimer = setTimeout(() => toast.classList.add("hidden"), 4200);
+      toastTimer = setTimeout(() => toast.classList.add("hidden"), duration);
     }
 
     async function api(path, options = {}) {
@@ -667,7 +667,15 @@
       button.textContent = "正在切块、同步并生成向量…";
       try {
         const result = await api("/v1/knowledge/sync-materials", { method: "POST", body: "{}" });
-        showToast(`同步完成：替换 ${result.replaced} 条，写入 ${result.ingested} 条，向量化 ${result.vectorized} 条`);
+        const synced = `同步完成：替换 ${result.replaced} 条，写入 ${result.ingested} 条，向量化 ${result.vectorized} 条`;
+        if (result.recheck_unavailable) {
+          showToast(`${synced}。保留的 ${result.rechecked} 条非文档知识未能复查（冲突检查不可用），请稍后重建再查`, true, 12000);
+        } else if (result.flagged.length) {
+          const lines = result.flagged.map((flag) => `#${flag.chunk_id} ${flag.message}`);
+          showToast(`${synced}。保留的知识中有 ${result.flagged.length} 条需处理：\n${lines.join("\n")}`, true, 20000);
+        } else {
+          showToast(`${synced}，保留的 ${result.rechecked} 条非文档知识复查无冲突`);
+        }
         await loadChunks();
         await loadOverview();
         await loadMaterials();

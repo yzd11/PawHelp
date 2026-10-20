@@ -29,6 +29,7 @@ from app.schemas import (
     KnowledgeMiningResult,
     KnowledgeMiningStats,
     KnowledgeOverview,
+    KnowledgeRecheckFlag,
     KnowledgeSyncResult,
     MarkdownKnowledgeIngestResult,
     MarkdownKnowledgePreviewItem,
@@ -405,7 +406,7 @@ class KnowledgeAdminService:
         if result.verdict == "conflict":
             raise KnowledgeConflictError(result.message)
 
-    async def _check_all(self, drafts) -> list:
+    async def _check_all(self, drafts, *, exclude_self: bool = False) -> list:
         """Check entries before any write; one unavailable check aborts the whole batch."""
 
         if self._consistency_checker is None or not drafts:
@@ -414,7 +415,8 @@ class KnowledgeAdminService:
 
         async def check(draft):
             async with limit:
-                return await self._consistency_checker.check(draft.questions, draft.answer)
+                return await self._consistency_checker.check(
+                    draft.questions, draft.answer, exclude_id=draft.id if exclude_self else None)
 
         results = await asyncio.gather(*(check(draft) for draft in drafts))
         unavailable = next((result for result in results if result.verdict == "unavailable"), None)
@@ -480,11 +482,32 @@ class KnowledgeAdminService:
                     )
 
             vectorized = await self._vectorize_pending_unlocked()
-            return KnowledgeSyncResult(
-                replaced=len(stale_ids),
-                ingested=inserted,
-                vectorized=vectorized,
-            )
+        rechecked, flagged, unavailable = await self._recheck_kept_entries()
+        return KnowledgeSyncResult(
+            replaced=len(stale_ids),
+            ingested=inserted,
+            vectorized=vectorized,
+            rechecked=rechecked,
+            flagged=flagged,
+            recheck_unavailable=unavailable,
+        )
+
+    async def _recheck_kept_entries(self) -> tuple[int, list[KnowledgeRecheckFlag], bool]:
+        """Report kept entries the rebuilt documents now repeat or contradict; never deletes them."""
+
+        if self._consistency_checker is None:
+            return 0, [], False
+        async with self._session_factory() as session:
+            rows = await KnowledgeRepository(session).list_kept_entries()
+        try:
+            results = await self._check_all(rows, exclude_self=True)
+        except KnowledgeCheckUnavailable:
+            return len(rows), [], True
+        return len(rows), [
+            KnowledgeRecheckFlag(chunk_id=row.id, verdict=result.verdict, message=result.message)
+            for row, result in zip(rows, results, strict=True)
+            if result.verdict in ("duplicate", "conflict")
+        ], False
 
     async def get_chunk(self, chunk_id: int) -> KnowledgeChunk:
         async with self._session_factory() as session:

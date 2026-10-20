@@ -266,7 +266,8 @@ def test_knowledge_console_page_and_complete_api_workflow() -> None:
     assert service.updated[1].questions == "最新邮费在哪里看？"
     assert deleted.json() == {"deleted": 9}
     assert service.deleted == 9
-    assert synced.json() == {"replaced": 8, "ingested": 10, "vectorized": 10}
+    assert synced.json() == {"replaced": 8, "ingested": 10, "vectorized": 10,
+                             "rechecked": 0, "flagged": [], "recheck_unavailable": False}
     assert chunks.json()["items"][0]["id"] == 9
     assert chunks.json()["total"] == 1
     assert chunks.json()["total_pages"] == 1
@@ -516,3 +517,53 @@ async def test_mined_entry_contradicting_a_document_is_staged_as_discarded_with_
     with pytest.raises(knowledge_admin_module.KnowledgeCheckUnavailable):
         await service.mine_conversations(vectorize_after=False)
     assert staged == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("shipping_decision", [SHIPPING_CONFLICT, ConnectionError("test-only provider outage")])
+async def test_rebuild_reports_kept_entries_the_rebuilt_documents_contradict(
+    monkeypatch, tmp_path: Path, shipping_decision
+) -> None:
+    kept = [SimpleNamespace(id=111, questions="邮费是多少", answer="没有固定的邮费金额。"),
+            SimpleNamespace(id=514, questions="猫窝能机洗吗", answer="可以，冷水轻柔模式。")]
+    deleted = []
+
+    class RebuildRepository:
+        async def list_replaceable_imports(self):
+            return []
+
+        async def mark_pending(self, rows):
+            return None
+
+        async def delete_ids(self, ids):
+            deleted.extend(ids)
+
+        async def list_identities(self, *, exclude_id=None):
+            return set()
+
+        async def list_kept_entries(self):
+            return kept
+
+    async def nothing_pending(*args, **kwargs):
+        return 0
+
+    monkeypatch.setattr(knowledge_admin_module, "KnowledgeRepository", lambda session: RebuildRepository())
+    monkeypatch.setattr(knowledge_admin_module, "vectorize_pending", nothing_pending)
+    new = {"verdict": "new", "existing_id": None, "reason": "文档未涉及"}
+    class CommittingSession(_AsyncContext):
+        async def commit(self):
+            return None
+
+    service, _ = _checked_service(tmp_path, {"邮费是多少": shipping_decision, "猫窝能机洗吗": new},
+                                  session_factory=lambda: CommittingSession())
+    service._vector_store = SimpleNamespace(delete=lambda ids: None)
+
+    result = await service.sync_materials()
+
+    assert result.rechecked == 2 and deleted == []
+    if isinstance(shipping_decision, Exception):
+        assert result.recheck_unavailable and result.flagged == []
+    else:
+        assert not result.recheck_unavailable
+        assert [(flag.chunk_id, flag.verdict) for flag in result.flagged] == [(111, "conflict")]
+        assert "#1002" in result.flagged[0].message

@@ -325,12 +325,23 @@ class KnowledgeDeleteResult(BaseModel):
     deleted: int
 
 
+class KnowledgeRecheckFlag(BaseModel):
+    """A kept entry that duplicates or contradicts the rebuilt knowledge."""
+
+    chunk_id: int
+    verdict: Literal["duplicate", "conflict"]
+    message: str
+
+
 class KnowledgeSyncResult(BaseModel):
     """Result of replacing imported sources with the current server files."""
 
     replaced: int
     ingested: int
     vectorized: int
+    rechecked: int = 0
+    flagged: list[KnowledgeRecheckFlag] = Field(default_factory=list)
+    recheck_unavailable: bool = False
 
 
 class KnowledgeSearchRequest(BaseModel):

@@ -40,6 +40,9 @@
   The check fails closed: if it cannot run, nothing is written. Seven old
   manual and mined entries that contradicted or repeated the shipping, return and
   promotion documents were removed.
+- A Markdown rebuild rechecks the manual, approved and mined entries it keeps
+  against the rebuilt documents and lists any that are now duplicates or
+  contradictions on /kb; it never deletes them itself.
 
 ### Tools
 
