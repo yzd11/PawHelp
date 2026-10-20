@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 import subprocess
 import sys
 import threading
@@ -119,10 +120,13 @@ def test_supplied_session_factory_does_not_create_or_dispose_an_engine(
     assert session_factory.calls == 0
 
 
-def test_uvicorn_start_up_does_not_import_sentence_transformers() -> None:
+def test_uvicorn_start_up_does_not_import_sentence_transformers(tmp_path) -> None:
     # langchain_text_splitters' package import pulls in sentence-transformers (~16s on start-up).
     code = "import sys, app.main; sys.exit('sentence_transformers' in sys.modules)"
-    assert subprocess.run([sys.executable, "-c", code], cwd=Path(__file__).parents[1]).returncode == 0
+    # An empty working directory has no .env, as in CI; the fake settings stand in for it.
+    env = {**os.environ, "PYTHONPATH": str(Path(__file__).parents[1]), "CHAT_BASE_URL": "http://localhost/v1",
+           "OPENAI_MODEL": "fake", "OPENAI_API_KEY": "fake", "DATABASE_URL": "mysql+asyncmy://unused"}
+    assert subprocess.run([sys.executable, "-c", code], cwd=tmp_path, env=env).returncode == 0
 
 
 @pytest.mark.parametrize("fails", [False, True])
