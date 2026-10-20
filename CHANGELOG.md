@@ -36,7 +36,8 @@
   first: a model compares the entry with its nearest matches and refuses a
   duplicate or a contradiction (manual entries and edits get 409, approved
   reviews stay pending, mined QA is staged as discarded with its reason, migration
-  0012). The check fails closed: if it cannot run, nothing is written. Seven old
+  0012), naming the existing entry by its ID with a one-sentence reason in Chinese.
+  The check fails closed: if it cannot run, nothing is written. Seven old
   manual and mined entries that contradicted or repeated the shipping, return and
   promotion documents were removed.
 

@@ -101,8 +101,8 @@ KNOWLEDGE_CONSISTENCY_SYSTEM_TEMPLATE = """Decide whether a candidate customer-s
 
 Return exactly one JSON object matching the requested schema:
 - verdict: "duplicate", "conflict" or "new".
-- existing_number: the number of the existing entry that is duplicated or contradicted; null for "new".
-- reason: a short explanation naming the facts compared.
+- existing_id: the id of the existing entry that is duplicated or contradicted; null for "new".
+- reason: one short sentence in Simplified Chinese for the knowledge-base operator, stating the facts compared. Refer to an existing entry only as #id, using its id.
 
 "duplicate": an existing entry already answers the candidate's question and the candidate adds no fact a customer could act on, including a vaguer restatement of an existing rule.
 "conflict": any fee, number, period, condition, permission or rule in the candidate differs from, or denies, what an existing entry states for the same matter, including saying something is not fixed where an existing entry fixes it.

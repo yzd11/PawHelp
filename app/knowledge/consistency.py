@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 class ConsistencyDecision(BaseModel):
     verdict: Literal["duplicate", "conflict", "new"]
-    existing_number: int | None = None
+    existing_id: int | None = None
     reason: str = Field(min_length=1, max_length=500)
 
 
@@ -54,9 +54,9 @@ class KnowledgeConsistencyChecker:
             closest = [chunk for chunk, _ in sorted(by_id.values(), key=lambda item: item[1], reverse=True)][:self._limit]
             if not closest:
                 return ConsistencyResult("new", "知识库中没有相近知识")
-            existing = [{"number": n, "source": "document" if chunk.source_kind == "markdown" else "added",
+            existing = [{"id": chunk.id, "source": "document" if chunk.source_kind == "markdown" else "added",
                          "section_path": chunk.section_path, "question": chunk.questions, "answer": chunk.answer}
-                        for n, chunk in enumerate(closest, 1)]
+                        for chunk in closest]
             payload = json.dumps({"candidate": {"question": question, "answer": answer}, "existing": existing},
                                  ensure_ascii=False, separators=(",", ":"))
             runnable = self._model.with_structured_output(ConsistencyDecision, method=self._method)
@@ -67,7 +67,6 @@ class KnowledgeConsistencyChecker:
             return ConsistencyResult("unavailable", "冲突检查不可用")
         if decision.verdict == "new":
             return ConsistencyResult("new", decision.reason)
-        number = decision.existing_number
-        cited = closest[number - 1] if number is not None and 1 <= number <= len(closest) else None
+        cited = next((chunk for chunk in closest if chunk.id == decision.existing_id), None)
         return ConsistencyResult(decision.verdict, decision.reason,
                                  cited.id if cited else None, (cited.section_path or cited.questions) if cited else None)

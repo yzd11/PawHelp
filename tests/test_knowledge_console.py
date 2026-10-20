@@ -419,7 +419,7 @@ class _OfficialShippingRuleSearch:
         return SimpleNamespace(matches=[SimpleNamespace(chunk=chunk, score=0.8)])
 
 
-SHIPPING_CONFLICT = {"verdict": "conflict", "existing_number": 1, "reason": "文档规定满 99 元包邮、未满收 10 元"}
+SHIPPING_CONFLICT = {"verdict": "conflict", "existing_id": 1002, "reason": "文档规定满 99 元包邮、未满收 10 元"}
 
 
 def _checked_service(tmp_path, decisions, session_factory=None):
@@ -498,7 +498,7 @@ async def test_mined_entry_contradicting_a_document_is_staged_as_discarded_with_
     async def extract(rows):
         return mined
 
-    new = {"verdict": "new", "existing_number": None, "reason": "文档未涉及"}
+    new = {"verdict": "new", "existing_id": None, "reason": "文档未涉及"}
     service, _ = _checked_service(tmp_path, {"邮费是多少": SHIPPING_CONFLICT, "猫窝能机洗吗": new},
                                   session_factory=lambda: RecordingSession())
     service._conversation_extractor = SimpleNamespace(extract=extract)
