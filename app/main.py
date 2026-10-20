@@ -1,7 +1,7 @@
 """FastAPI application factory."""
 
 import asyncio
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
 import logging
 from pathlib import Path
 import time
@@ -66,8 +66,12 @@ def create_app(
     knowledge_admin_service: KnowledgeAdminService | None = None,
     rag_eval_runner: RagEvalRunner | None = None,
     preload_models: bool = False,
+    runtime_root: Path | None = None,
 ) -> FastAPI:
-    """Create an initialized API application and its runtime dependencies."""
+    """Create an initialized API application and its runtime dependencies.
+
+    ``runtime_root`` receives the context log and conversation checkpoints.
+    """
 
     active_settings = settings or get_settings()
     active_model = model or create_chat_model(active_settings)
@@ -160,14 +164,16 @@ def create_app(
         try:
             scheduled.start()
             if isinstance(active_tool_chat, WorkflowChatService):
-                configure_context_logging(PROJECT_ROOT)
-                active_tool_chat._memory.startup_check()
-                checkpoint_dir = PROJECT_ROOT / ".runtime"
-                checkpoint_dir.mkdir(exist_ok=True)
-                async with AsyncSqliteSaver.from_conn_string(
-                    str(checkpoint_dir / "conversation-checkpoints.sqlite3")
-                ) as checkpointer:
-                    active_tool_chat.set_checkpointer(checkpointer)
+                async with AsyncExitStack() as runtime:
+                    # Only the served app writes files; other apps (tests) keep checkpoints in memory.
+                    if runtime_root is not None:
+                        runtime.callback(configure_context_logging(runtime_root))
+                        checkpoint_dir = runtime_root / ".runtime"
+                        checkpoint_dir.mkdir(exist_ok=True)
+                        checkpoints = AsyncSqliteSaver.from_conn_string(
+                            str(checkpoint_dir / "conversation-checkpoints.sqlite3"))
+                        active_tool_chat.set_checkpointer(await runtime.enter_async_context(checkpoints))
+                    active_tool_chat._memory.startup_check()
                     try:
                         yield
                     finally:
@@ -219,4 +225,4 @@ def create_app(
 
 
 # Module-level ASGI entry point used by ``uvicorn app.main:app``; tests build their own.
-app = create_app(preload_models=True)
+app = create_app(preload_models=True, runtime_root=PROJECT_ROOT)

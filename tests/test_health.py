@@ -1,4 +1,5 @@
 from pathlib import Path
+import logging
 import os
 import subprocess
 import sys
@@ -153,3 +154,27 @@ def test_preloaded_knowledge_models_report_loading_then_outcome(monkeypatch, fai
             time.sleep(0.05)
     assert body == {"status": "ok", "knowledge_models": "failed" if fails else "ready"}
     assert sorted(warmed) == (["reranker"] if fails else ["embedder", "reranker"])
+
+
+def _context_file_handlers() -> list[logging.FileHandler]:
+    return [h for h in logging.getLogger("app.workflow").handlers if isinstance(h, logging.FileHandler)]
+
+
+def test_app_without_runtime_root_writes_no_context_log() -> None:
+    application = create_app(settings=make_settings(), model=NeverCalledModel(),
+                             session_factory=NeverCalledSessionFactory())
+
+    with TestClient(application):
+        assert _context_file_handlers() == []
+
+
+def test_runtime_root_holds_context_log_and_checkpoints_until_shutdown(tmp_path) -> None:
+    application = create_app(settings=make_settings(), model=NeverCalledModel(),
+                             session_factory=NeverCalledSessionFactory(), runtime_root=tmp_path)
+
+    with TestClient(application):
+        logging.getLogger("app.workflow").info("context log probe")
+
+    assert "context log probe" in (tmp_path / "log" / "app.log").read_text(encoding="utf-8")
+    assert (tmp_path / ".runtime" / "conversation-checkpoints.sqlite3").exists()
+    assert _context_file_handlers() == []

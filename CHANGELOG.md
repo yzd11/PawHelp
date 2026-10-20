@@ -41,6 +41,9 @@
 
 - `scripts.start` brings up containers, migrations, MCP servers, the topic classifier
   and the app in one command, and stops them together on Ctrl+C.
+- Only the served app writes `log/app.log` and the SQLite conversation checkpoints;
+  apps built in tests keep checkpoints in memory, so test runs no longer mix fake
+  conversations into the real context log. The log handler is detached at shutdown.
 - Faster cold start: retrieval models warm up in the background at startup
   (first chat 37.5s → 13.2s) and the text-splitter import no longer
   loads sentence-transformers (import 27s → 7s).
