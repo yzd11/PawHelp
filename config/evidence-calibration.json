@@ -1,7 +1,7 @@
 {
   "formula_version": 2,
   "purpose": "relevance_prefilter",
-  "threshold": 0.127,
+  "threshold": 0.174,
   "training": {
     "size": 72,
     "accepted": 60,
@@ -10,25 +10,27 @@
     "useful_recall": 1.0
   },
   "training_optimal_range": [
-    0.087,
-    0.166
+    0.137,
+    0.212
   ],
   "validation": {
     "size": 24,
-    "accepted": 17,
+    "accepted": 19,
     "unsafe_accepted": 0,
     "unsafe_rate": 0.0,
-    "useful_recall": 0.85,
+    "useful_recall": 0.95,
     "passed": true
   },
   "validation_method": "independent",
   "reranker_model": "BAAI/bge-reranker-v2-m3",
-  "corpus_fingerprint": "c5e1dbc10b55631fe1b3a8e66eac0c930baa7aee31e880d7aecb7f9b76a6ec65",
+  "scoring_fingerprint": "f262ca1fd918e9f09e1c4b97dd35624c28d7b49ec20eb7866d94650680ec6bd2",
   "dataset_sha256": "10e99984d289d4043695c174c61bf7d14849bc8e5439d7e56d2c569f2c1d4ce0",
   "sample_count": 72,
-  "collection_mode": "raw query, local retrieval only; serving rewrite distribution must be audited",
+  "collection_mode": "served path: model query rewrite + question split + whole knowledge base, knowledge intent; policy-intent extra queries and content filter are not covered",
   "reviewer": "Claude 逐条原文审阅（要点字面命中作初稿），用户授权代做标注；不是人工业务核准",
-  "scope_limit": "96题小样本原始Top5快照；线上拆分/改写分布不同，需另验。评测题与知识文档均为自建生成，不代表生产错误率保证。",
-  "training_labels_sha256": "9c1d0b6992b27c0f66c0087c3a478044e0951913eb23b501034a0e08e381600a",
-  "validation_labels_sha256": "a388da794aa0ae57a21bac9c9fa1c937a2394939749183f6e7b39e42714034a8"
+  "scope_limit": "96 题小样本的线上路径 Top5 快照（知识意图：改写 + 拆分 + 全库）；政策意图的附加查询与内容类型过滤未覆盖，改写模型非确定，本快照只是一次采样。评测题与知识文档均为自建生成，不代表生产错误率保证。",
+  "kept_entries_sha256": "086ad7bbb96eca52e3283a0e4bb9b4a3ed45b303e8f4ac0a06b1e8ea2c1cff66",
+  "kept_entries_count": 1,
+  "training_labels_sha256": "46912ff029ee96cf0ccc1b9b1132bbc2d6a028f3f0a390c2ebd47fc7aaaaf79e",
+  "validation_labels_sha256": "e9c7bcb38ec2ac2271d95bf8a33be75010c14bcef8061a9cf7d0ea980fefb42c"
 }

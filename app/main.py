@@ -138,6 +138,7 @@ def create_app(
             method=active_settings.structured_output_method,
         ),
         conversation_batch_size=active_settings.conversation_mining_batch_size,
+        calibration_path=Path(active_settings.evidence_calibration_path),
         consistency_checker=KnowledgeConsistencyChecker(
             consistency_search, active_model, method=active_settings.structured_output_method,
         ),

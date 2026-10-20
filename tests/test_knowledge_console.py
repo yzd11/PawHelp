@@ -520,6 +520,34 @@ async def test_mined_entry_contradicting_a_document_is_staged_as_discarded_with_
 
 
 @pytest.mark.asyncio
+async def test_overview_warns_when_kept_entries_changed_after_calibration(monkeypatch, tmp_path: Path) -> None:
+    from app.knowledge.confidence import kept_entries_sha256
+
+    calibrated = [SimpleNamespace(id=514, source_kind="manual", questions="猫窝能机洗吗", answer="可以，冷水轻柔模式。")]
+    kept = list(calibrated)
+
+    class OverviewRepository:
+        async def count_chunks_by_status(self):
+            return {"done": 98}
+
+        async def list_kept_entries(self):
+            return kept
+
+    monkeypatch.setattr(knowledge_admin_module, "KnowledgeRepository", lambda session: OverviewRepository())
+    calibration = tmp_path / "calibration.json"
+    calibration.write_text(json.dumps({"kept_entries_sha256": kept_entries_sha256(calibrated)}), encoding="utf-8")
+    service = KnowledgeAdminService(
+        lambda: _AsyncContext(), None, SimpleNamespace(count_entities=lambda: 98, collection_name="test"),  # type: ignore[arg-type]
+        None, documents_root=tmp_path, vectorize_batch_size=16, calibration_path=calibration)  # type: ignore[arg-type]
+
+    assert (await service.overview()).calibration_entries_changed is False
+    kept.append(SimpleNamespace(id=1013, source_kind="manual", questions="邮费在哪里看", answer="结算页显示。"))
+    assert (await service.overview()).calibration_entries_changed is True
+    calibration.write_text(json.dumps({"threshold": 0.2}), encoding="utf-8")
+    assert (await service.overview()).calibration_entries_changed is None
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("shipping_decision", [SHIPPING_CONFLICT, ConnectionError("test-only provider outage")])
 async def test_rebuild_reports_kept_entries_the_rebuilt_documents_contradict(
     monkeypatch, tmp_path: Path, shipping_decision

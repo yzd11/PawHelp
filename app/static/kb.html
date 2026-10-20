@@ -203,6 +203,7 @@
           <div class="mini-metric"><strong id="vectorMilvus">—</strong><span>Milvus 条数</span></div>
           <div class="mini-metric"><strong id="vectorCollection">—</strong><span>集合</span></div>
         </div>
+        <p id="calibrationDrift" class="section-copy hidden" style="color: var(--danger); font-weight: 700;"></p>
         <div class="inline-actions"><button id="vectorizeButton" class="mint" type="button">补齐 pending 向量</button></div>
       </section>
 
@@ -450,6 +451,9 @@
         document.querySelector("#vectorMilvus").textContent = result.milvus_total ?? "—";
         document.querySelector("#vectorCollection").textContent = result.milvus_collection;
         document.querySelector("#dualWriteTag").textContent = `双写 ${state}`;
+        const drift = document.querySelector("#calibrationDrift");
+        drift.textContent = "证据门控校准之后，人工、审核或挖掘的知识有增删改，相关性分数可能偏移，建议重新校准。";
+        drift.classList.toggle("hidden", result.calibration_entries_changed !== true);
       } catch (error) {
         showToast(error.message, true);
       }

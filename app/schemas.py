@@ -288,6 +288,8 @@ class KnowledgeOverview(BaseModel):
     milvus_total: int | None
     milvus_collection: str
     dual_write_consistent: bool | None
+    # None: no published calibration records the non-document entries it was collected with.
+    calibration_entries_changed: bool | None = None
 
 
 class KnowledgeMiningStats(BaseModel):

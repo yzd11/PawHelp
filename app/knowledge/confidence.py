@@ -5,6 +5,15 @@ import json
 from pathlib import Path
 import math
 
+from app.prompts import QUERY_UNDERSTANDING_SYSTEM_TEMPLATE
+
+_KNOWLEDGE_CODE = Path(__file__).resolve().parent
+# Everything that changes the evidence or scores the gate sees on the served path.
+SCORING_SOURCES = ("chunking.py", "embedding.py", "reranking.py", "search.py", "query_understanding.py", "pipeline.py")
+SCORING_SETTINGS = ("embedding_model", "embedding_max_length", "reranker_model", "reranker_query_max_length",
+                    "reranker_passage_max_length", "dense_recall_limit", "bm25_recall_limit", "rerank_limit",
+                    "rerank_top_k", "knowledge_rerank_threshold", "openai_model", "structured_output_method")
+
 
 def evidence_signals(evidence):
     scores = sorted([float(x.get("score", 0)) for x in evidence if x.get("answer") and math.isfinite(float(x.get("score", 0)))], reverse=True)
@@ -18,11 +27,31 @@ def evidence_signals(evidence):
             "score": .6 * top1 + .25 * min(weighted_count / 3., 1.) + .15 * margin}
 
 
-def corpus_fingerprint(root):
+def _text_bytes(path):
+    # A checkout with autocrlf must hash the same as the committed LF text.
+    return path.read_bytes().replace(b"\r\n", b"\n")
+
+
+def scoring_fingerprint(root, settings):
+    """Bind a calibration to the documents, scoring code, rewrite prompt, models and limits."""
     digest = hashlib.sha256()
     for path in sorted(Path(root).rglob("*.md")):
         digest.update(path.relative_to(root).as_posix().encode())
-        digest.update(path.read_bytes())
+        digest.update(_text_bytes(path))
+    for name in SCORING_SOURCES:
+        digest.update(name.encode())
+        digest.update(_text_bytes(_KNOWLEDGE_CODE / name))
+    digest.update(QUERY_UNDERSTANDING_SYSTEM_TEMPLATE.encode())
+    digest.update(json.dumps({key: getattr(settings, key, None) for key in SCORING_SETTINGS},
+                             sort_keys=True, default=str).encode())
+    return digest.hexdigest()
+
+
+def kept_entries_sha256(rows):
+    """Hash the non-document entries served alongside the documents; they change at runtime."""
+    digest = hashlib.sha256()
+    for row in sorted(rows, key=lambda row: row.id):
+        digest.update(json.dumps([row.id, row.source_kind, row.questions, row.answer], ensure_ascii=False).encode())
     return digest.hexdigest()
 
 
@@ -37,15 +66,17 @@ class ConfidenceDecision:
 
 class EvidenceGate:
     def __init__(self, settings, root):
-        self.path, self.model = Path(settings.evidence_calibration_path), settings.reranker_model
-        self.fingerprint = corpus_fingerprint(root)
+        self.path = Path(settings.evidence_calibration_path)
+        self.fingerprint = scoring_fingerprint(root, settings)
 
     def check(self, evidence, *, legacy_confident):
         signals = evidence_signals(evidence)
         try:
             data = json.loads(self.path.read_text(encoding="utf-8"))
-            if data["reranker_model"] != self.model or data["corpus_fingerprint"] != self.fingerprint or data["formula_version"] != 2 or data.get("purpose") != "relevance_prefilter":
-                raise ValueError("校准版本与当前知识文档/模型不一致")
+            if data["formula_version"] != 2 or data.get("purpose") != "relevance_prefilter":
+                raise ValueError("校准公式版本不符")
+            if data.get("scoring_fingerprint") != self.fingerprint:
+                raise ValueError("校准与当前评分输入不一致（知识文档、检索代码、改写提示词、模型或检索参数已变），需重新校准")
             threshold = float(data["threshold"])
             if not 0 <= threshold <= 1 or not data["validation"]["passed"]:
                 raise ValueError("阈值或留出集验证无效")
@@ -56,7 +87,7 @@ class EvidenceGate:
                                       "未校准：保留原闸行为；" + str(error))
 
 
-def calibrate(rows, *, reranker_model, corpus_hash, dataset_hash, validation_rows=None):
+def calibrate(rows, *, reranker_model, scoring_hash, dataset_hash, validation_rows=None):
     """Calibrate relevance only; completeness is a separate mandatory runtime check."""
     ordered = sorted(rows, key=lambda r: hashlib.sha256(r["case_id"].encode()).hexdigest())
     if len(ordered) < 30 or any(type(r.get("sufficient")) is not bool for r in ordered):
@@ -91,5 +122,5 @@ def calibrate(rows, *, reranker_model, corpus_hash, dataset_hash, validation_row
     return {"formula_version": 2, "purpose": "relevance_prefilter", "threshold": threshold,
             "training": stats(training, threshold), "training_optimal_range": [min(tied), max(tied)],
             "validation": held, "validation_method": "independent" if validation_rows is not None else "hash_split",
-            "reranker_model": reranker_model, "corpus_fingerprint": corpus_hash,
+            "reranker_model": reranker_model, "scoring_fingerprint": scoring_hash,
             "dataset_sha256": dataset_hash, "sample_count": len(rows)}

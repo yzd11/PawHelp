@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from app.database.models import RequestObservation
 from app.evaluation.dashboard import calibration_report, trend_report
 from app.evaluation.pipeline import cost_by_intent
-from app.knowledge.confidence import corpus_fingerprint
+from app.knowledge.confidence import scoring_fingerprint
 
 
 async def test_cost_window_partial_usage_and_no_fake_share():
@@ -120,8 +120,10 @@ def calibration_files(tmp_path):
     knowledge = tmp_path/"knowledge"
     knowledge.mkdir()
     (knowledge/"policy.md").write_text("policy",encoding="utf-8")
+    path=tmp_path/"calibration.json"
+    settings=SimpleNamespace(evidence_calibration_path=str(path),reranker_model="test-reranker")
     artifact={"formula_version":2,"purpose":"relevance_prefilter","threshold":.3,"validation":{"passed":True},
-        "reranker_model":"test-reranker", "corpus_fingerprint":corpus_fingerprint(knowledge),"dataset_sha256":"test-dataset",
+        "reranker_model":"test-reranker", "scoring_fingerprint":scoring_fingerprint(knowledge, settings),"dataset_sha256":"test-dataset",
         "reviewer":"Synthetic test fixture, not business approval"}
     directory=tmp_path/"reports/confidence-calibration"
     directory.mkdir(parents=True)
@@ -132,9 +134,8 @@ def calibration_files(tmp_path):
         raw=json.dumps(data).encode()
         (directory/f"{name}.json").write_bytes(raw)
         artifact[f"{name}_labels_sha256"]=hashlib.sha256(raw).hexdigest()
-    path=tmp_path/"calibration.json"
     path.write_text(json.dumps(artifact),encoding="utf-8")
-    return tmp_path,path,SimpleNamespace(evidence_calibration_path=str(path),reranker_model="test-reranker")
+    return tmp_path,path,settings
 
 
 def test_offline_scan_uses_bound_snapshots_and_never_publishes(calibration_files):

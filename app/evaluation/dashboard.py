@@ -33,9 +33,9 @@ def _label_snapshot(directory, digest, artifact):
             continue
         data = json.loads(raw)
         if any(data.get(key) != artifact.get(key) for key in (
-            "reranker_model", "corpus_fingerprint", "dataset_sha256",
+            "reranker_model", "scoring_fingerprint", "dataset_sha256",
         )):
-            raise ValueError("标注快照的模型 / 知识文档 / 数据集与校准记录不一致")
+            raise ValueError("标注快照的评分输入 / 数据集与校准记录不一致")
         rows = data["rows"]
         if not isinstance(rows, list) or not rows or any(type(r.get("sufficient")) is not bool for r in rows):
             raise ValueError("标注快照缺少独立布尔标签")

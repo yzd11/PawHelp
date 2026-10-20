@@ -1,6 +1,7 @@
 """Small local knowledge-console service over the existing RAG components."""
 
 import asyncio
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 import re
@@ -11,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.database.models import KnowledgeChunk
 from app.knowledge.chunking import KnowledgeDraft, chunk_markdown
+from app.knowledge.confidence import kept_entries_sha256
 from app.knowledge.consistency import KnowledgeConsistencyChecker
 from app.knowledge.embedding import BgeM3Embedder
 from app.knowledge.mining import ConversationKnowledgeExtractor
@@ -115,6 +117,7 @@ class KnowledgeAdminService:
         conversation_extractor: ConversationKnowledgeExtractor | None = None,
         conversation_batch_size: int = 20,
         consistency_checker: KnowledgeConsistencyChecker | None = None,
+        calibration_path: Path | None = None,
     ) -> None:
         self._session_factory = session_factory
         self._embedder = embedder
@@ -125,6 +128,7 @@ class KnowledgeAdminService:
         self._conversation_extractor = conversation_extractor
         self._conversation_batch_size = conversation_batch_size
         self._consistency_checker = consistency_checker
+        self._calibration_path = calibration_path
         self._mutation_lock = asyncio.Lock()
 
     def list_materials(self) -> list[KnowledgeMaterial]:
@@ -269,7 +273,9 @@ class KnowledgeAdminService:
 
     async def overview(self) -> KnowledgeOverview:
         async with self._session_factory() as session:
-            counts = await KnowledgeRepository(session).count_chunks_by_status()
+            repository = KnowledgeRepository(session)
+            counts = await repository.count_chunks_by_status()
+            kept = await repository.list_kept_entries()
         done = counts.get("done", 0)
         try:
             milvus_total: int | None = await milvus_call(
@@ -285,7 +291,17 @@ class KnowledgeAdminService:
             milvus_total=milvus_total,
             milvus_collection=self._vector_store.collection_name,
             dual_write_consistent=dual_write_is_consistent(counts, milvus_total),
+            calibration_entries_changed=self._calibration_entries_changed(kept),
         )
+
+    def _calibration_entries_changed(self, kept) -> bool | None:
+        """Manual and mined entries are served with the documents but change at runtime, so only warn."""
+
+        try:
+            recorded = json.loads(self._calibration_path.read_text(encoding="utf-8"))["kept_entries_sha256"]
+        except (AttributeError, OSError, ValueError, KeyError, TypeError):
+            return None
+        return recorded != kept_entries_sha256(kept)
 
     async def mining_stats(self) -> KnowledgeMiningStats:
         async with self._session_factory() as session:

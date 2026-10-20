@@ -43,6 +43,13 @@
 - A Markdown rebuild rechecks the manual, approved and mined entries it keeps
   against the rebuilt documents and lists any that are now duplicates or
   contradictions on /kb; it never deletes them itself.
+- The evidence-gate calibration is collected on the served path (model rewrite,
+  question split, whole knowledge base) instead of the raw query. Its fingerprint
+  covers the documents, the chunking/retrieval code, the rewrite prompt, the models
+  and the retrieval settings, so changing any of them leaves the gate uncalibrated;
+  /kb warns when manual or mined entries changed after calibration. The 96 labels
+  were re-reviewed on the new evidence and are unchanged; the threshold rose from
+  0.127 to 0.174 and independent validation passes (0/24 unsafe, recall 0.95).
 
 ### Tools
 

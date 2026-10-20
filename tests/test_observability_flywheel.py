@@ -200,15 +200,21 @@ async def test_observability_explicit_opt_in_persists_owned_record_and_costs(mys
 
 def test_calibration_holdout_and_version_guard(tmp_path):
     rows=[{"case_id": f"case{i}", "sufficient":bool(i%2), "evidence":[{"answer":"事实", "score":.95 if i%2 else .05}]} for i in range(80)]
-    from app.knowledge.confidence import corpus_fingerprint
+    from app.knowledge.confidence import scoring_fingerprint
     corpus = tmp_path/"knowledge";corpus.mkdir()
-    artifact=calibrate(rows,reranker_model="reranker",corpus_hash=corpus_fingerprint(corpus),dataset_hash="labels")
-    path=tmp_path/"calibration.json";path.write_text(json.dumps(artifact),encoding="utf-8")
+    path=tmp_path/"calibration.json"
     settings=config(evidence_calibration_path=str(path),reranker_model="reranker")
+    artifact=calibrate(rows,reranker_model="reranker",scoring_hash=scoring_fingerprint(corpus,settings),dataset_hash="labels")
+    path.write_text(json.dumps(artifact),encoding="utf-8")
     gate=EvidenceGate(settings,corpus)
     assert gate.check(rows[1]["evidence"],legacy_confident=False).accepted
     assert not gate.check(rows[0]["evidence"],legacy_confident=True).accepted
-    settings.reranker_model="changed"
+    # Any input that shifts scores retires the calibration, not only the documents or the reranker.
+    for key, value in (("reranker_model", "changed"), ("rerank_limit", settings.rerank_limit + 1),
+                       ("openai_model", "another-rewrite-model")):
+        changed = settings.model_copy(update={key: value})
+        assert not EvidenceGate(changed,corpus).check([],legacy_confident=False).calibrated, key
+    (corpus/"policy.md").write_text("a new rule", encoding="utf-8")
     assert not EvidenceGate(settings,corpus).check([],legacy_confident=False).calibrated
 
 

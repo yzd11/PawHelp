@@ -54,7 +54,8 @@ class KnowledgeEvidencePipeline:
                  "answer": self.bound_text(m.chunk.answer), "score": m.score}
                 for i, m in enumerate(matches, 1)]
 
-    async def retrieve(self, question, *, extra_queries=(), **options):
+    async def gather(self, question, *, extra_queries=(), **options):
+        """Split, retrieve and merge: exactly the evidence the gate scores. Calibration collects it here."""
         parts = await self.splitter.split(question)
         queries = list(dict.fromkeys([*parts, question, *extra_queries]))[:8]
         options = {**options, "strategy": RetrievalStrategy.HYBRID_RERANK, "limit": self.top_k}
@@ -73,7 +74,10 @@ class KnowledgeEvidencePipeline:
             if len(selected) >= self.top_k:
                 break
             selected.setdefault(match.chunk.id, match)
-        matches = tuple(sorted(selected.values(), key=lambda m: m.score, reverse=True))
+        return results, tuple(sorted(selected.values(), key=lambda m: m.score, reverse=True)), queries
+
+    async def retrieve(self, question, *, extra_queries=(), **options):
+        results, matches, queries = await self.gather(question, extra_queries=extra_queries, **options)
         evidence = self.evidence(matches)
         numeric = self.gate.check(evidence, legacy_confident=any(r.confident for r in results))
         completeness = await self.checker.check(question, evidence) if numeric.accepted else None
