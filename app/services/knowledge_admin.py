@@ -4,12 +4,14 @@ import asyncio
 from datetime import UTC, datetime
 from pathlib import Path
 import re
+from types import SimpleNamespace
 from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.database.models import KnowledgeChunk
 from app.knowledge.chunking import KnowledgeDraft, chunk_markdown
+from app.knowledge.consistency import KnowledgeConsistencyChecker
 from app.knowledge.embedding import BgeM3Embedder
 from app.knowledge.mining import ConversationKnowledgeExtractor
 from app.knowledge.search import (
@@ -86,7 +88,15 @@ class KnowledgeChunkNotFound(ValueError):
 
 
 class KnowledgeDuplicateError(ValueError):
-    """Raised when a write repeats an existing question-and-answer identity."""
+    """Raised when a write repeats existing knowledge."""
+
+
+class KnowledgeConflictError(ValueError):
+    """Raised when a write contradicts existing knowledge."""
+
+
+class KnowledgeCheckUnavailable(RuntimeError):
+    """Raised when the consistency check cannot run; nothing is written."""
 
 
 class KnowledgeAdminService:
@@ -103,6 +113,7 @@ class KnowledgeAdminService:
         vectorize_batch_size: int,
         conversation_extractor: ConversationKnowledgeExtractor | None = None,
         conversation_batch_size: int = 20,
+        consistency_checker: KnowledgeConsistencyChecker | None = None,
     ) -> None:
         self._session_factory = session_factory
         self._embedder = embedder
@@ -112,6 +123,7 @@ class KnowledgeAdminService:
         self._vectorize_batch_size = vectorize_batch_size
         self._conversation_extractor = conversation_extractor
         self._conversation_batch_size = conversation_batch_size
+        self._consistency_checker = consistency_checker
         self._mutation_lock = asyncio.Lock()
 
     def list_materials(self) -> list[KnowledgeMaterial]:
@@ -207,6 +219,13 @@ class KnowledgeAdminService:
             request.markdown,
             content_type=request.content_type,
         )
+        async with self._session_factory() as session:
+            existing = await KnowledgeRepository(session).list_identities()
+        candidates = [draft for draft, duplicate in zip(drafts, _duplicate_flags(drafts, existing), strict=True)
+                      if not duplicate]
+        blocked = {knowledge_identity(draft.questions, draft.answer)
+                   for draft, result in zip(candidates, await self._check_all(candidates), strict=True)
+                   if result.verdict != "new"}
         async with self._mutation_lock:
             async with self._session_factory() as session, session.begin():
                 repository = KnowledgeRepository(session)
@@ -214,7 +233,7 @@ class KnowledgeAdminService:
                 novel = [
                     draft
                     for draft, duplicate in zip(drafts, flags, strict=True)
-                    if not duplicate
+                    if not duplicate and knowledge_identity(draft.questions, draft.answer) not in blocked
                 ]
                 if novel:
                     await repository.add_drafts(
@@ -230,6 +249,7 @@ class KnowledgeAdminService:
         return MarkdownKnowledgeIngestResult(
             inserted=len(novel),
             skipped_duplicates=sum(flags),
+            skipped_conflicts=len(drafts) - sum(flags) - len(novel),
             vectorized=vectorized,
         )
 
@@ -288,10 +308,13 @@ class KnowledgeAdminService:
                     vectorized=0,
                 )
             candidates = await self._conversation_extractor.extract(transcripts)
+            checks = await self._check_all(
+                [SimpleNamespace(questions=c.question, answer=c.answer) for c in candidates])
+            rejections = [None if result.verdict == "new" else result.message for result in checks]
             batch_no = f"{datetime.now(UTC):%Y%m%d%H%M%S}-{uuid4().hex[:8]}"
             async with self._session_factory() as session, session.begin():
                 repository = KnowledgeMiningRepository(session)
-                await repository.add_extracted(batch_no, candidates)
+                await repository.add_extracted(batch_no, candidates, rejections)
                 represented = {
                     candidate.source_conversation_id for candidate in candidates
                 }
@@ -304,6 +327,7 @@ class KnowledgeAdminService:
                     ],
                 )
                 kept, discarded = await repository.deduplicate_and_promote()
+                discarded += sum(reason is not None for reason in rejections)
             vectorized = (
                 await self._vectorize_pending_unlocked()
                 if vectorize_after and kept
@@ -326,6 +350,7 @@ class KnowledgeAdminService:
             content_type=request.content_type,
             is_key_clause=request.is_key_clause,
         )
+        await self.assert_consistent(draft.questions, draft.answer)
         async with self._mutation_lock:
             async with self._session_factory() as session, session.begin():
                 repository = KnowledgeRepository(session)
@@ -345,6 +370,7 @@ class KnowledgeAdminService:
     ) -> KnowledgeChunk:
         """Replace one chunk, then upsert its stable Milvus primary key."""
 
+        await self.assert_consistent(request.questions, request.answer, exclude_id=chunk_id)
         async with self._mutation_lock:
             async with self._session_factory() as session, session.begin():
                 repository = KnowledgeRepository(session)
@@ -365,6 +391,36 @@ class KnowledgeAdminService:
                 await repository.mark_pending([row])
             await self._vectorize_pending_unlocked()
             return await self._get_any_chunk(chunk_id)
+
+    async def assert_consistent(self, question: str, answer: str, *, exclude_id: int | None = None) -> None:
+        """Refuse a write that duplicates or contradicts existing knowledge."""
+
+        if self._consistency_checker is None:
+            return
+        result = await self._consistency_checker.check(question, answer, exclude_id=exclude_id)
+        if result.verdict == "unavailable":
+            raise KnowledgeCheckUnavailable(result.message)
+        if result.verdict == "duplicate":
+            raise KnowledgeDuplicateError(result.message)
+        if result.verdict == "conflict":
+            raise KnowledgeConflictError(result.message)
+
+    async def _check_all(self, drafts) -> list:
+        """Check entries before any write; one unavailable check aborts the whole batch."""
+
+        if self._consistency_checker is None or not drafts:
+            return [SimpleNamespace(verdict="new")] * len(drafts)
+        limit = asyncio.Semaphore(4)
+
+        async def check(draft):
+            async with limit:
+                return await self._consistency_checker.check(draft.questions, draft.answer)
+
+        results = await asyncio.gather(*(check(draft) for draft in drafts))
+        unavailable = next((result for result in results if result.verdict == "unavailable"), None)
+        if unavailable is not None:
+            raise KnowledgeCheckUnavailable(unavailable.message)
+        return results
 
     async def delete_chunk(self, chunk_id: int) -> None:
         """Hide, delete from Milvus, then remove the MySQL authority row."""

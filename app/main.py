@@ -18,9 +18,10 @@ from app.database.session import create_async_engine_from_settings, create_sessi
 from app.evaluation.runtime import (
     DEFAULT_GENERATION_STRATEGIES,
 )
+from app.knowledge.consistency import KnowledgeConsistencyChecker
 from app.knowledge.embedding import BgeM3Embedder
 from app.knowledge.mining import ConversationKnowledgeExtractor
-from app.knowledge.query_understanding import QueryUnderstandingService
+from app.knowledge.query_understanding import IdentityQueryUnderstanding, QueryUnderstandingService
 from app.knowledge.reranking import BgeReranker
 from app.knowledge.search import HybridKnowledgeSearch
 from app.knowledge.vector_store import MilvusKnowledgeStore
@@ -117,6 +118,14 @@ def create_app(
         session_factory=active_session_factory,
         knowledge_search=knowledge_search,
     )
+    # Write-time checks compare the entry as written: no model rewrite of the query.
+    consistency_search = HybridKnowledgeSearch(
+        active_session_factory, embedder, vector_store, reranker, IdentityQueryUnderstanding(),
+        confidence_threshold=active_settings.knowledge_rerank_threshold,
+        dense_limit=active_settings.dense_recall_limit,
+        bm25_limit=active_settings.bm25_recall_limit,
+        rerank_limit=active_settings.rerank_limit,
+    )
     active_knowledge_admin = knowledge_admin_service or KnowledgeAdminService(
         active_session_factory,
         embedder,
@@ -129,6 +138,9 @@ def create_app(
             method=active_settings.structured_output_method,
         ),
         conversation_batch_size=active_settings.conversation_mining_batch_size,
+        consistency_checker=KnowledgeConsistencyChecker(
+            consistency_search, active_model, method=active_settings.structured_output_method,
+        ),
     )
     if rag_eval_runner is None:
         async def default_rag_eval_runner(full_generation: bool) -> dict[str, object]:

@@ -230,6 +230,7 @@ class MarkdownKnowledgePreviewResult(BaseModel):
 class MarkdownKnowledgeIngestResult(BaseModel):
     inserted: int
     skipped_duplicates: int
+    skipped_conflicts: int = 0
     vectorized: int
 
 

@@ -34,6 +34,7 @@ class GapModel:
 
 class Publishing:
     def __init__(self, sessions): self.sessions, self.fail, self.chunk_id = sessions, True, None
+    async def assert_consistent(self, question, answer, **_): pass
     async def vectorize_pending(self):
         if self.fail: raise ConnectionError("test-only vector failure")
         async with self.sessions() as session, session.begin():

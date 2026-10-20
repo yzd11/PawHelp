@@ -1,5 +1,6 @@
 """Public knowledge-console page and API workflow."""
 
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -9,8 +10,10 @@ from fastapi.testclient import TestClient
 from app.config import Settings
 from app.database.models import KnowledgeChunk
 from app.knowledge.chunking import KnowledgeDraft
+from app.knowledge.consistency import KnowledgeConsistencyChecker
 from app.main import KNOWLEDGE_PAGE_PATH, create_app
 from app.repositories.knowledge import KnowledgeRepository
+from app.repositories.knowledge_mining import KnowledgeCandidate, KnowledgeMiningRepository, Transcript
 from app.schemas import (
     KnowledgeMaterial,
     KnowledgeMiningResult,
@@ -389,3 +392,127 @@ async def test_material_sync_scope_never_replaces_manual_or_conversation_knowled
     assert rows[1].id in replaceable_ids
     assert rows[2].id not in replaceable_ids
     assert rows[3].id not in replaceable_ids
+
+
+class _ScriptedConsistencyModel:
+    """Judges a candidate by its question; an exception stands for an unavailable provider."""
+
+    def __init__(self, decisions):
+        self.decisions, self.payloads = decisions, []
+
+    def with_structured_output(self, schema, **kwargs):
+        return self
+
+    async def ainvoke(self, messages):
+        payload = json.loads(messages[-1].content.split("\n", 1)[1])
+        self.payloads.append(payload)
+        decision = self.decisions[payload["candidate"]["question"]]
+        if isinstance(decision, Exception):
+            raise decision
+        return decision
+
+
+class _OfficialShippingRuleSearch:
+    async def retrieve(self, query, **kwargs):
+        chunk = SimpleNamespace(id=1002, source_kind="markdown", section_path="商品与购物 FAQ / 运费怎么算",
+                                questions="运费怎么算", answer="单笔订单满 99 元包邮,未满收取 10 元运费。")
+        return SimpleNamespace(matches=[SimpleNamespace(chunk=chunk, score=0.8)])
+
+
+SHIPPING_CONFLICT = {"verdict": "conflict", "existing_number": 1, "reason": "文档规定满 99 元包邮、未满收 10 元"}
+
+
+def _checked_service(tmp_path, decisions, session_factory=None):
+    model = _ScriptedConsistencyModel(decisions)
+    checker = KnowledgeConsistencyChecker(
+        _OfficialShippingRuleSearch(), model, method="json_schema")
+    service = KnowledgeAdminService(
+        session_factory or _DuplicateSessionFactory(), None, None, None,  # type: ignore[arg-type]
+        documents_root=tmp_path, vectorize_batch_size=16, consistency_checker=checker,
+        conversation_extractor=SimpleNamespace(extract=None),  # type: ignore[arg-type]
+    )
+    return service, model
+
+
+@pytest.mark.parametrize(("decision", "status", "code"), [
+    (SHIPPING_CONFLICT, 409, "knowledge_conflict"),
+    (ConnectionError("test-only provider outage"), 503, "knowledge_check_unavailable"),
+])
+def test_manual_entry_contradicting_a_document_is_refused_before_any_write(
+    monkeypatch, tmp_path: Path, decision, status, code
+) -> None:
+    class NoInsertRepository:
+        async def list_identities(self, *, exclude_id=None):
+            return set()
+
+        async def add_drafts(self, *args, **kwargs):
+            raise AssertionError("refused knowledge must not be inserted")
+
+    monkeypatch.setattr(knowledge_admin_module, "KnowledgeRepository", lambda session: NoInsertRepository())
+    service, model = _checked_service(tmp_path, {"邮费是多少": decision})
+    app = create_app(settings=settings(), model=FakeCombinedModel(),
+                     session_factory=UnusedSessionFactory(),  # type: ignore[arg-type]
+                     knowledge_admin_service=service)
+
+    with TestClient(app) as client:
+        response = client.post("/v1/knowledge/chunks", json={
+            "category": "配送服务", "questions": "邮费是多少", "answer": "没有固定的邮费金额，以结算页为准。"})
+
+    assert response.status_code == status
+    detail = response.json()["detail"]
+    assert detail["code"] == code
+    assert model.payloads[0]["existing"][0]["source"] == "document"
+    if status == 409:
+        assert "#1002" in detail["message"] and "运费怎么算" in detail["message"]
+
+
+@pytest.mark.asyncio
+async def test_mined_entry_contradicting_a_document_is_staged_as_discarded_with_its_reason(
+    monkeypatch, tmp_path: Path
+) -> None:
+    staged = []
+
+    class RecordingSession(_AsyncContext):
+        def add_all(self, rows):
+            staged.extend(rows)
+
+        async def flush(self):
+            return None
+
+    async def transcripts(self, *, limit):
+        return [Transcript(7, ())]
+
+    async def promote(self):
+        return sum(row.status == "extracted" for row in staged), 0
+
+    async def no_empty_sources(self, batch_no, conversation_ids):
+        return None
+
+    repository = KnowledgeMiningRepository
+    monkeypatch.setattr(repository, "load_unstaged_transcripts", transcripts)
+    monkeypatch.setattr(repository, "deduplicate_and_promote", promote)
+    monkeypatch.setattr(repository, "add_empty_sources", no_empty_sources)
+    mined = [KnowledgeCandidate(7, "邮费是多少", "没有固定的邮费金额。"),
+             KnowledgeCandidate(7, "猫窝能机洗吗", "可以，冷水轻柔模式。")]
+
+    async def extract(rows):
+        return mined
+
+    new = {"verdict": "new", "existing_number": None, "reason": "文档未涉及"}
+    service, _ = _checked_service(tmp_path, {"邮费是多少": SHIPPING_CONFLICT, "猫窝能机洗吗": new},
+                                  session_factory=lambda: RecordingSession())
+    service._conversation_extractor = SimpleNamespace(extract=extract)
+
+    result = await service.mine_conversations(vectorize_after=False)
+
+    assert (result.kept, result.discarded) == (1, 1)
+    assert [(row.question, row.status) for row in staged] == [("邮费是多少", "discarded"), ("猫窝能机洗吗", "extracted")]
+    assert "#1002" in staged[0].discard_reason and staged[1].discard_reason is None
+
+    staged.clear()
+    service, _ = _checked_service(tmp_path, {"邮费是多少": ConnectionError("outage"), "猫窝能机洗吗": new},
+                                  session_factory=lambda: RecordingSession())
+    service._conversation_extractor = SimpleNamespace(extract=extract)
+    with pytest.raises(knowledge_admin_module.KnowledgeCheckUnavailable):
+        await service.mine_conversations(vectorize_after=False)
+    assert staged == []

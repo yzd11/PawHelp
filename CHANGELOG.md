@@ -32,6 +32,13 @@
   最长能录多久" is no longer refused for evidence that does not name the model. The
   separate "本篇适用于" intro chunks were dropped (101 → 97 document chunks) and the
   calibration was re-collected; the threshold (0.127) still passes validation.
+- Every write outside a Markdown rebuild is checked against existing knowledge
+  first: a model compares the entry with its nearest matches and refuses a
+  duplicate or a contradiction (manual entries and edits get 409, approved
+  reviews stay pending, mined QA is staged as discarded with its reason, migration
+  0012). The check fails closed: if it cannot run, nothing is written. Seven old
+  manual and mined entries that contradicted or repeated the shipping, return and
+  promotion documents were removed.
 
 ### Tools
 

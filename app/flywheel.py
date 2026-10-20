@@ -233,6 +233,15 @@ class Flywheel:
 
     async def review(self, review_id, approved_answer=None, *, reject=False):
         if not reject and (not approved_answer or not approved_answer.strip()): raise ValueError("通过时必须填写核准答案")
+        if not reject:
+            async with self.sessions() as session:
+                row = await session.get(ReviewQueue, review_id)
+                exact = row is not None and await session.scalar(select(KnowledgeChunk.id).where(
+                    KnowledgeChunk.questions == row.normalized_question,
+                    KnowledgeChunk.answer == approved_answer.strip()).limit(1))
+            if row is not None and row.review_status == "待审" and not exact:
+                # Raises before the review is marked approved, so the operator can revise the answer.
+                await self.knowledge.assert_consistent(row.normalized_question, approved_answer.strip())
         async with self.sessions() as session, session.begin():
             row = await session.scalar(select(ReviewQueue).where(ReviewQueue.id == review_id).with_for_update())
             if row is None: raise LookupError("审核记录不存在")

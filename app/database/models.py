@@ -281,6 +281,7 @@ class QAExtractionStaging(Base):
         nullable=False,
         server_default=text("'extracted'"),
     )
+    discard_reason: Mapped[str | None] = mapped_column(VARCHAR(500), nullable=True)
     created_at: Mapped[datetime] = _created_at()
 
 

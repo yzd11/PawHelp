@@ -25,7 +25,8 @@ from app.schemas import (
     MarkdownKnowledgeRequest,
 )
 from app.services.knowledge_admin import (
-    KnowledgeAdminService, KnowledgeChunkNotFound, KnowledgeDuplicateError, KnowledgeMaterialNotFound,
+    KnowledgeAdminService, KnowledgeCheckUnavailable, KnowledgeChunkNotFound, KnowledgeConflictError,
+    KnowledgeDuplicateError, KnowledgeMaterialNotFound,
 )
 
 SAFE_KNOWLEDGE_ERROR = {"code": "knowledge_unavailable", "message": "知识库服务暂时不可用，请稍后重试"}
@@ -90,6 +91,11 @@ def knowledge_router(knowledge_admin_service: KnowledgeAdminService) -> APIRoute
     ) -> MarkdownKnowledgeIngestResult:
         try:
             return await knowledge_admin_service.ingest_markdown(request)
+        except KnowledgeCheckUnavailable as error:
+            raise HTTPException(
+                status_code=503,
+                detail={"code": "knowledge_check_unavailable", "message": str(error)},
+            ) from error
         except Exception as error:
             raise HTTPException(status_code=503, detail=SAFE_KNOWLEDGE_ERROR) from error
 
@@ -114,6 +120,11 @@ def knowledge_router(knowledge_admin_service: KnowledgeAdminService) -> APIRoute
             return await knowledge_admin_service.mine_conversations(
                 vectorize_after=request.vectorize_after
             )
+        except KnowledgeCheckUnavailable as error:
+            raise HTTPException(
+                status_code=503,
+                detail={"code": "knowledge_check_unavailable", "message": str(error)},
+            ) from error
         except Exception as error:
             raise HTTPException(status_code=503, detail=SAFE_KNOWLEDGE_ERROR) from error
 
@@ -176,6 +187,16 @@ def knowledge_router(knowledge_admin_service: KnowledgeAdminService) -> APIRoute
                 status_code=409,
                 detail={"code": "knowledge_duplicate", "message": str(error)},
             ) from error
+        except KnowledgeConflictError as error:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": "knowledge_conflict", "message": str(error)},
+            ) from error
+        except KnowledgeCheckUnavailable as error:
+            raise HTTPException(
+                status_code=503,
+                detail={"code": "knowledge_check_unavailable", "message": str(error)},
+            ) from error
         except SQLAlchemyError as error:
             raise HTTPException(status_code=503, detail=SAFE_KNOWLEDGE_ERROR) from error
 
@@ -194,6 +215,16 @@ def knowledge_router(knowledge_admin_service: KnowledgeAdminService) -> APIRoute
             raise HTTPException(
                 status_code=409,
                 detail={"code": "knowledge_duplicate", "message": str(error)},
+            ) from error
+        except KnowledgeConflictError as error:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": "knowledge_conflict", "message": str(error)},
+            ) from error
+        except KnowledgeCheckUnavailable as error:
+            raise HTTPException(
+                status_code=503,
+                detail={"code": "knowledge_check_unavailable", "message": str(error)},
             ) from error
         except KnowledgeChunkNotFound as error:
             raise HTTPException(

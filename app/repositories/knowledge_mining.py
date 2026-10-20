@@ -129,7 +129,11 @@ class KnowledgeMiningRepository:
         self,
         batch_no: str,
         candidates: Sequence[KnowledgeCandidate],
+        rejections: Sequence[str | None] = (),
     ) -> None:
+        """Stage candidates; a rejected one is discarded with its reason and never promoted."""
+
+        reasons = list(rejections) or [None] * len(candidates)
         self._session.add_all(
             [
                 QAExtractionStaging(
@@ -137,9 +141,10 @@ class KnowledgeMiningRepository:
                     source_ref=conversation_source_ref(candidate.source_conversation_id),
                     question=candidate.question,
                     answer=candidate.answer,
-                    status="extracted",
+                    status="extracted" if reason is None else "discarded",
+                    discard_reason=reason[:500] if reason else None,
                 )
-                for candidate in candidates
+                for candidate, reason in zip(candidates, reasons, strict=True)
             ]
         )
         await self._session.flush()

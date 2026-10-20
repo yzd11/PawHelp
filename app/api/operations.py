@@ -13,6 +13,7 @@ from sqlalchemy import text
 from app.repositories.conversations import ConversationNotFound
 from app.evaluation.pipeline import cost_by_intent
 from app.evaluation.dashboard import calibration_report, trend_report
+from app.services.knowledge_admin import KnowledgeCheckUnavailable
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +94,7 @@ def operations_router(settings, sessions, flywheel, pipeline):
         try: return await flywheel.review(review_id, request.approved_answer)
         except LookupError as error: raise HTTPException(404, detail=str(error)) from error
         except ValueError as error: raise HTTPException(409, detail=str(error)) from error
+        except KnowledgeCheckUnavailable as error: raise HTTPException(503, detail=str(error)) from error
 
     @admin.post("/api/review/{review_id}/reject")
     async def reject(review_id: int):
