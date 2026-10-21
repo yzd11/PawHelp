@@ -63,6 +63,9 @@
 - Jev was also tried as the intent review signal on 199 new single-turn questions (44 user-reviewed
   labels, fixed validation split). It tied the current confidence < 0.55 rule on validation and
   was not adopted: the LLM's wrong intents are confident, so no threshold on either signal catches them.
+- The intent prompt counts account login and security, points and coupons, and shop and company
+  information as 商品咨询. Questions such as "怎么改登录密码" were classed 其他 with high
+  confidence and the customer was asked to clarify instead of getting the account-security answer.
 
 ### Tools
 

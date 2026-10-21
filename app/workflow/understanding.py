@@ -91,7 +91,7 @@ reference_status 只能为 clear（本身清楚）、resolved（历史唯一消�
 
 INTENT_PROMPT = """你只判断用户现在要做什么，不回答业务问题。只输出 JSON：intent、confidence、task_kind、requested_lookups、clarification_question。
 intent 只能是：物流、订单、商品咨询、退款退货、售后、投诉、人工、会话回顾、闲聊、其他。
-物流=包裹运输位置/进度；订单=下单、订单状态或订单修改；商品咨询=商品及平台规则咨询，含参数、价格、用法、清洗、安全、回收、发票和服务说明；
+物流=包裹运输位置/进度；订单=下单、订单状态或订单修改；商品咨询=商品及平台规则咨询，含参数、价格、用法、清洗、安全、回收、发票、积分优惠券、账户登录与账号安全、店铺与公司信息和服务说明；
 退款退货=申请退款、退货或退货政策；售后=维修、换货、破损、保修等；投诉=明确表达投诉或服务不满；
 人工=明确要求建工单、转人工、人工客服跟进，优先于投诉；上一轮客服追问建单信息、本轮补充描述也归人工。
 会话回顾=询问当前会话此前说过/查过/提过的订单、商品、诉求或处理结果，只要回顾历史而非查询最新业务数据。
@@ -125,6 +125,7 @@ confidence 是 0 到 1 的自报把握，不是已校准概率。拿不准可以
 “你好呀” → {"intent":"闲聊","confidence":0.99,"task_kind":"unspecified","clarification_question":""}
 “猫抓板用旧了可以回收吗” → {"intent":"商品咨询","confidence":0.95,"task_kind":"general_information","clarification_question":""}
 “猫窝可以放进洗衣机洗吗” → {"intent":"商品咨询","confidence":0.95,"task_kind":"general_information","clarification_question":""}
+“手机号换了怎么改绑账号” → {"intent":"商品咨询","confidence":0.93,"task_kind":"general_information","clarification_question":""}
 此前查物流，本轮“退货政策是什么” → {"intent":"退款退货","confidence":0.95,"task_kind":"general_information","clarification_question":""}
 此前问建单描述，本轮“饮水机一直漏水” → {"intent":"人工","confidence":0.95,"task_kind":"unspecified","clarification_question":""}
 此前想建工单，本轮“先不建了，查订单1001物流” → {"intent":"物流","confidence":0.96,"task_kind":"progress_query","clarification_question":""}
