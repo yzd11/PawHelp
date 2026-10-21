@@ -2,7 +2,7 @@
 
 import json
 from collections.abc import Sequence
-from typing import Protocol
+from typing import Literal, Protocol
 
 from langchain_core.messages import BaseMessage
 from pydantic import BaseModel, Field
@@ -14,6 +14,22 @@ class EvidenceDecision(BaseModel):
     useful: bool
     reason: str = Field(min_length=1, max_length=500)
     check_failed: bool = False
+
+
+class JudgedDecision(EvidenceDecision):
+    """A decision plus who made it; kept out of the LLM's output schema."""
+
+    judge: Literal["llm", "jev"] = "llm"
+    jev: dict | None = None
+
+
+def evidence_payload(question: str, evidence: Sequence[dict[str, object]]) -> str:
+    """The exact payload every sufficiency judge reads."""
+    return json.dumps(
+        {"question": question, "evidence": list(evidence)},
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
 
 
 class StructuredRunnable(Protocol):
@@ -36,11 +52,7 @@ class EvidenceSufficiencyChecker:
     async def check(
         self, question: str, evidence: Sequence[dict[str, object]]
     ) -> EvidenceDecision:
-        payload = json.dumps(
-            {"question": question, "evidence": list(evidence)},
-            ensure_ascii=False,
-            separators=(",", ":"),
-        )
+        payload = evidence_payload(question, evidence)
         try:
             runnable = self._model.with_structured_output(
                 EvidenceDecision, method=self._method

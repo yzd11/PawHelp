@@ -10,6 +10,7 @@ from pydantic import (
     PositiveInt,
     SecretStr,
     StringConstraints,
+    model_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -83,9 +84,22 @@ class Settings(BaseSettings):
     evaluation_sample_per_bucket: int = Field(default=2, ge=1, le=60)
     evaluation_max_model_calls: int = Field(default=100, ge=1, le=5000)
     evidence_calibration_path: str = "config/evidence-calibration.json"
+    evidence_judge: Literal["llm", "jev", "shadow"] = "llm"
+    typesafe_api_key: SecretStr | None = None
+    jev_model: str = "jev-1.14.0"
+    jev_timeout_seconds: float = Field(default=10, gt=0, le=60)
+    jev_calibration_path: str = "config/jev-evidence-calibration.json"
     observation_snapshot_limit: int = Field(default=5, ge=1, le=20)
     input_price_per_million: float | None = Field(default=None, ge=0)
     output_price_per_million: float | None = Field(default=None, ge=0)
+
+    @model_validator(mode="after")
+    def _jev_needs_key(self) -> "Settings":
+        if self.evidence_judge != "llm" and not (
+            self.typesafe_api_key and self.typesafe_api_key.get_secret_value().strip()
+        ):
+            raise ValueError("EVIDENCE_JUDGE=jev/shadow 需要设置 TYPESAFE_API_KEY")
+        return self
 
     model_config = SettingsConfigDict(
         env_file=".env",

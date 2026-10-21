@@ -11,7 +11,7 @@ from sqlalchemy import func, select
 from app.config import Settings
 from app.context import bound_text
 from app.knowledge.confidence import EvidenceGate
-from app.knowledge.evidence import EvidenceSufficiencyChecker
+from app.knowledge.jev_evidence import build_evidence_checker
 from app.knowledge.pipeline import KnowledgeEvidencePipeline, QuestionSplitter
 from app.database.models import KnowledgeChunk
 from app.database.session import create_async_engine_from_settings, create_session_factory
@@ -156,7 +156,7 @@ async def run_retrieval_evaluation(
     )
     pipeline = KnowledgeEvidencePipeline(
         search, EvidenceGate(settings, Path(__file__).resolve().parents[2] / "knowledge"),
-        EvidenceSufficiencyChecker(model, method=settings.structured_output_method),
+        build_evidence_checker(settings, model),
         QuestionSplitter(model, method=settings.structured_output_method), top_k=settings.rerank_top_k,
         bound_text=lambda text: bound_text(text, settings.evidence_chunk_max_tokens,
             lambda messages: int(count_tokens_approximately(messages, chars_per_token=settings.context_chars_per_token))),

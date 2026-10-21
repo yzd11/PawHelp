@@ -50,6 +50,13 @@
   /kb warns when manual or mined entries changed after calibration. The 96 labels
   were re-reviewed on the new evidence and are unchanged; the threshold rose from
   0.127 to 0.174 and independent validation passes (0/24 unsafe, recall 0.95).
+- Optional TypeSafe Jev (`jev-1.14.0`) evidence-sufficiency judge. `EVIDENCE_JUDGE=shadow`
+  records Jev's P(yes) next to the LLM verdict; `jev` lets Jev accept or refuse outside a
+  calibrated band and hands the band, Jev errors and calibration mismatches to the LLM.
+  The default stays `llm` and needs no key. On the archived 500-question run (498 scored)
+  the thresholds chosen on training cases are P ≤ 0.05 refuse / P ≥ 0.60 accept; on the
+  served validation path Jev matches the LLM (0 false refusals, 0 false accepts) and decides
+  93.5% of cases itself, AUC 0.999. It does not fix the LLM's three over-strict refusals.
 
 ### Tools
 

@@ -57,6 +57,24 @@ BM25 在口语问法上排序最弱，在故障码、耗材编号上排序最好
 
 扩充语料后评测暴露了一个检索缺陷：查询理解让大模型猜测文档分类和内容类型，并把猜测当作 Milvus 硬过滤，猜成 FAQ 时会把手册和政策整类排除。去掉推断过滤后，同一套题的纯检索对比中 hybrid + rerank 的 Recall@5 从 0.938 升到 0.996，新题从 0.894 升到 0.994；查询改写由大模型生成，每次运行的分数有小幅波动，上表为最近一次完整运行。
 
+## Jev 证据判定评测
+
+`scripts/run_jev_evidence_evals.py` 把最近一次 500 题报告里 hybrid + rerank 每题的证据（就是线上门控读到的那份，已截断）
+交给 TypeSafe Jev，问一个是/否概率问题；大模型基线直接用报告里已记录的核验结论，不再调用大模型。标签是“可回答 / 库外”。
+题号末位为 0 或 5 的题是独立验证集，在看到任何 Jev 分数前固定；阈值只用其余题选：放行线高于训练集所有库外题的概率，
+拒答线低于训练集所有可回答题的概率，中间交给大模型。上线门槛：线上路径的验证题上误放、误拒都不多于大模型，且 Jev
+直接决定至少一半。通过后才写 `config/jev-evidence-calibration.json`，它绑定模型版本和指令文本，任一变化即退回大模型。
+
+```powershell
+uv run python -m scripts.run_jev_evidence_evals --limit 3      # 冒烟，只打印逐题概率
+uv run python -m scripts.run_jev_evidence_evals --publish      # 全量 499 题，约 60 万输入 token（约 $0.03）
+```
+
+需要 `.env` 里的 `TYPESAFE_API_KEY`，不需要数据库。2026-10-21 的结果见 [`reports/jev-evidence/jev-evidence-20261021.md`](../reports/jev-evidence/jev-evidence-20261021.md)：
+线上验证 77 题误拒、误放均与大模型相同（0），Jev 直接决定 93.5%；验证集恰好没有进入核验的库外题，全部 18 道验证库外题的
+最高概率 0.42，低于放行线 0.60。放行线由一道被粗筛拦下的库外题（D9，P=0.60）决定，余量不大；Jev 以英文训练为主，
+换模型版本或改指令都要重跑。
+
 ## 意图评测集
 
 `intent_cases.jsonl` 检查意图识别这一步：大模型给出的 `intent`、`task_kind`、

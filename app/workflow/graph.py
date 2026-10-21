@@ -21,7 +21,7 @@ from langgraph.types import Command
 from app.chat import ChatEvent
 from app.context import ContextBudgetExceeded, PreparedContext
 from app.knowledge.confidence import EvidenceGate
-from app.knowledge.evidence import EvidenceSufficiencyChecker
+from app.knowledge.jev_evidence import build_evidence_checker
 from app.knowledge.pipeline import KnowledgeEvidencePipeline, QuestionSplitter
 from app.observability import Observability, finish_trace
 from app.prompts import CUSTOMER_SERVICE_SYSTEM_TEMPLATE
@@ -120,7 +120,7 @@ class WorkflowChatService(ToolAwareChatService):
                                      json.dumps([convert_to_openai_tool(tool) for tool in tools], ensure_ascii=False))
         self._evidence_pipeline = KnowledgeEvidencePipeline(
             self._knowledge_search, self._evidence_gate,
-            EvidenceSufficiencyChecker(self._model, method=self._settings.structured_output_method),
+            build_evidence_checker(self._settings, self._model),
             QuestionSplitter(self._model, method=self._settings.structured_output_method),
             top_k=self._settings.rerank_top_k,
             bound_text=lambda text: self._memory.bound_text(text, self._settings.evidence_chunk_max_tokens),

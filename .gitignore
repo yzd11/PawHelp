@@ -31,6 +31,7 @@ dist/
 /reports/runs/
 /reports/confidence-calibration/
 /reports/retrieval-evaluation.json
+/reports/jev-evidence/*.json
 *.safetensors
 *.onnx
 *.pt

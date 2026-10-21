@@ -1,0 +1,251 @@
+{
+  "purpose": "jev_evidence_sufficiency",
+  "model": "jev-1.14.0",
+  "instructions_sha256": "0e42232e707b5b320c52a8d9d1cc74b75429354bf68ed4f03d56acb635810227",
+  "dataset": {
+    "cases_sha256": "10e99984d289d4043695c174c61bf7d14849bc8e5439d7e56d2c569f2c1d4ce0",
+    "report_generated_at": "2026-10-20T14:14:17.525748+00:00",
+    "evidence_sha256": "17c7a8d25d9d3af38f4be9a6738e2483043b1b6136db9262ab121862dcb6b36c"
+  },
+  "lower": 0.049999,
+  "upper": 0.600001,
+  "errors": [
+    "E90"
+  ],
+  "train": {
+    "probability": {
+      "cases": 399,
+      "positives": 327,
+      "negatives": 72,
+      "accuracy_at_0_5": 0.949874686716792,
+      "brier": 0.04981052631578948,
+      "auc": 0.9983222901800883,
+      "reliability": [
+        {
+          "bin": "0.0-0.1",
+          "n": 71,
+          "mean_p": 0.015,
+          "answerable_rate": 0.014
+        },
+        {
+          "bin": "0.1-0.2",
+          "n": 2,
+          "mean_p": 0.15,
+          "answerable_rate": 0.5
+        },
+        {
+          "bin": "0.2-0.3",
+          "n": 2,
+          "mean_p": 0.205,
+          "answerable_rate": 1.0
+        },
+        {
+          "bin": "0.3-0.4",
+          "n": 7,
+          "mean_p": 0.339,
+          "answerable_rate": 1.0
+        },
+        {
+          "bin": "0.4-0.5",
+          "n": 8,
+          "mean_p": 0.458,
+          "answerable_rate": 1.0
+        },
+        {
+          "bin": "0.5-0.6",
+          "n": 17,
+          "mean_p": 0.548,
+          "answerable_rate": 1.0
+        },
+        {
+          "bin": "0.6-0.7",
+          "n": 15,
+          "mean_p": 0.64,
+          "answerable_rate": 0.933
+        },
+        {
+          "bin": "0.7-0.8",
+          "n": 53,
+          "mean_p": 0.753,
+          "answerable_rate": 1.0
+        },
+        {
+          "bin": "0.8-0.9",
+          "n": 90,
+          "mean_p": 0.855,
+          "answerable_rate": 1.0
+        },
+        {
+          "bin": "0.9-1.0",
+          "n": 134,
+          "mean_p": 0.936,
+          "answerable_rate": 1.0
+        }
+      ]
+    },
+    "served_gate": {
+      "cases": 321,
+      "positives": 316,
+      "negatives": 5,
+      "llm_false_refusals": 3,
+      "llm_false_accepts": 0,
+      "policy_false_refusals": 3,
+      "policy_false_accepts": 0,
+      "jev_coverage": 0.8940809968847352
+    }
+  },
+  "validation": {
+    "probability": {
+      "cases": 99,
+      "positives": 81,
+      "negatives": 18,
+      "accuracy_at_0_5": 0.9797979797979798,
+      "brier": 0.03875555555555555,
+      "auc": 0.9986282578875172,
+      "reliability": [
+        {
+          "bin": "0.0-0.1",
+          "n": 17,
+          "mean_p": 0.014,
+          "answerable_rate": 0.0
+        },
+        {
+          "bin": "0.1-0.2",
+          "n": 1,
+          "mean_p": 0.17,
+          "answerable_rate": 1.0
+        },
+        {
+          "bin": "0.2-0.3",
+          "n": 1,
+          "mean_p": 0.26,
+          "answerable_rate": 1.0
+        },
+        {
+          "bin": "0.4-0.5",
+          "n": 1,
+          "mean_p": 0.42,
+          "answerable_rate": 0.0
+        },
+        {
+          "bin": "0.5-0.6",
+          "n": 3,
+          "mean_p": 0.58,
+          "answerable_rate": 1.0
+        },
+        {
+          "bin": "0.6-0.7",
+          "n": 2,
+          "mean_p": 0.625,
+          "answerable_rate": 1.0
+        },
+        {
+          "bin": "0.7-0.8",
+          "n": 16,
+          "mean_p": 0.761,
+          "answerable_rate": 1.0
+        },
+        {
+          "bin": "0.8-0.9",
+          "n": 24,
+          "mean_p": 0.856,
+          "answerable_rate": 1.0
+        },
+        {
+          "bin": "0.9-1.0",
+          "n": 34,
+          "mean_p": 0.933,
+          "answerable_rate": 1.0
+        }
+      ]
+    },
+    "served_gate": {
+      "cases": 77,
+      "positives": 77,
+      "negatives": 0,
+      "llm_false_refusals": 0,
+      "llm_false_accepts": 0,
+      "policy_false_refusals": 0,
+      "policy_false_accepts": 0,
+      "jev_coverage": 0.935064935064935
+    },
+    "passed": true,
+    "rule": "served validation: false accepts and false refusals <= LLM, Jev coverage >= 0.5"
+  },
+  "all_cases": {
+    "cases": 498,
+    "positives": 408,
+    "negatives": 90,
+    "accuracy_at_0_5": 0.9558232931726908,
+    "brier": 0.04761285140562249,
+    "auc": 0.9983932461873638,
+    "reliability": [
+      {
+        "bin": "0.0-0.1",
+        "n": 88,
+        "mean_p": 0.015,
+        "answerable_rate": 0.011
+      },
+      {
+        "bin": "0.1-0.2",
+        "n": 3,
+        "mean_p": 0.157,
+        "answerable_rate": 0.667
+      },
+      {
+        "bin": "0.2-0.3",
+        "n": 3,
+        "mean_p": 0.223,
+        "answerable_rate": 1.0
+      },
+      {
+        "bin": "0.3-0.4",
+        "n": 7,
+        "mean_p": 0.339,
+        "answerable_rate": 1.0
+      },
+      {
+        "bin": "0.4-0.5",
+        "n": 9,
+        "mean_p": 0.453,
+        "answerable_rate": 0.889
+      },
+      {
+        "bin": "0.5-0.6",
+        "n": 20,
+        "mean_p": 0.552,
+        "answerable_rate": 1.0
+      },
+      {
+        "bin": "0.6-0.7",
+        "n": 17,
+        "mean_p": 0.638,
+        "answerable_rate": 0.941
+      },
+      {
+        "bin": "0.7-0.8",
+        "n": 69,
+        "mean_p": 0.755,
+        "answerable_rate": 1.0
+      },
+      {
+        "bin": "0.8-0.9",
+        "n": 114,
+        "mean_p": 0.855,
+        "answerable_rate": 1.0
+      },
+      {
+        "bin": "0.9-1.0",
+        "n": 168,
+        "mean_p": 0.936,
+        "answerable_rate": 1.0
+      }
+    ]
+  },
+  "latency_ms": {
+    "p50": 340,
+    "p95": 2758
+  },
+  "input_tokens": 601000,
+  "estimated_cost_usd": 0.0252
+}
