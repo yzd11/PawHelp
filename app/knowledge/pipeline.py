@@ -86,8 +86,6 @@ class KnowledgeEvidencePipeline:
                       "reason": completeness.reason if completeness is not None else numeric.reason,
                       "relevance_accepted": numeric.accepted,
                       "complete": completeness.useful if completeness is not None else None,
-                      "check_failed": completeness.check_failed if completeness is not None else False,
-                      "judge": getattr(completeness, "judge", "llm") if completeness is not None else None,
-                      "jev": getattr(completeness, "jev", None)}
+                      "check_failed": completeness.check_failed if completeness is not None else False}
         base = results[0]
         return EvidenceRetrieval(replace(base, matches=matches, confident=accepted), queries, confidence)

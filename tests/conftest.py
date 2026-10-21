@@ -52,6 +52,11 @@ def pytest_sessionstart(session):
         "DATABASE_URL": "mysql+asyncmy://unused",
         "OBSERVABILITY_ENABLED": "false",
     })
+    # Never read the developer's .env either: a local EVIDENCE_JUDGE=jev plus a real key
+    # would send test questions to TypeSafe. An explicit _env_file still works.
+    from app.config import Settings
+
+    Settings.model_config["env_file"] = None
 
 
 @pytest_asyncio.fixture

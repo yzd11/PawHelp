@@ -225,6 +225,10 @@ async def run_retrieval_evaluation(
                 "chunk_max_tokens": settings.evidence_chunk_max_tokens,
                 "calibration_sha256": hashlib.sha256(Path(settings.evidence_calibration_path).read_bytes()).hexdigest()
                     if Path(settings.evidence_calibration_path).is_file() else None,
+                "judge": settings.evidence_judge,
+                "jev_model": settings.jev_model if settings.evidence_judge != "llm" else None,
+                "jev_calibration_sha256": hashlib.sha256(Path(settings.jev_calibration_path).read_bytes()).hexdigest()
+                    if settings.evidence_judge != "llm" and Path(settings.jev_calibration_path).is_file() else None,
             },
             "retrieval_configuration": {key: getattr(settings, key) for key in (
                 "dense_recall_limit", "bm25_recall_limit", "rerank_limit", "knowledge_rerank_threshold",

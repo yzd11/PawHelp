@@ -51,7 +51,7 @@
   were re-reviewed on the new evidence and are unchanged; the threshold rose from
   0.127 to 0.174 and independent validation passes (0/24 unsafe, recall 0.95).
 - Optional TypeSafe Jev (`jev-1.14.0`) evidence-sufficiency judge. `EVIDENCE_JUDGE=shadow`
-  records Jev's P(yes) next to the LLM verdict; `jev` lets Jev accept or refuse outside a
+  logs Jev's P(yes) next to the LLM verdict; `jev` lets Jev accept or refuse outside a
   calibrated band and hands the band, Jev errors and calibration mismatches to the LLM.
   The default stays `llm` and needs no key. On the archived 500-question run (498 scored)
   the thresholds chosen on training cases are P ≤ 0.05 refuse / P ≥ 0.60 accept; on the

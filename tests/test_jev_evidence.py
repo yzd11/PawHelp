@@ -140,7 +140,7 @@ def test_jev_modes_refuse_to_start_without_a_key(mode):
         fake_settings(evidence_judge=mode)
 
 
-async def test_pipeline_records_who_judged_the_evidence(tmp_path):
+async def test_pipeline_serves_jev_verdict_and_logs_it(tmp_path, caplog):
     chunk = SimpleNamespace(id=7, category="policy", section_path="运费", questions="包邮", answer=EVIDENCE[0]["answer"])
     result = RetrievalResult((KnowledgeMatch(chunk, 0.9),), None, RetrievalStrategy.HYBRID_RERANK, True)
     search = SimpleNamespace(retrieve=lambda q, **_: asyncio.sleep(0, result))
@@ -148,12 +148,12 @@ async def test_pipeline_records_who_judged_the_evidence(tmp_path):
     splitter = SimpleNamespace(split=lambda q: asyncio.sleep(0, [q]))
     pipeline = KnowledgeEvidencePipeline(search, gate, routed(tmp_path, FakeJev(0.05), FakeLlm()), splitter, top_k=5)
 
-    retrieval = await pipeline.retrieve("满多少包邮")
+    with caplog.at_level("INFO", logger="app.knowledge.jev_evidence"):
+        retrieval = await pipeline.retrieve("满多少包邮")
 
     assert retrieval.result.confident is False
-    assert retrieval.confidence["judge"] == "jev"
-    assert retrieval.confidence["jev"]["p_yes"] == 0.05
     assert retrieval.confidence["reason"] == "Jev 判定证据不足以回答（P=0.05）"
+    assert "judge=jev" in caplog.text and '"p_yes": 0.05' in caplog.text
 
 
 def test_offline_eval_picks_bounds_on_train_and_compares_with_the_llm_on_validation():
