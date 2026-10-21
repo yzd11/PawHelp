@@ -56,7 +56,10 @@
   The default stays `llm` and needs no key. On the archived 500-question run (498 scored)
   the thresholds chosen on training cases are P ≤ 0.05 refuse / P ≥ 0.60 accept; on the
   served validation path Jev matches the LLM (0 false refusals, 0 false accepts) and decides
-  93.5% of cases itself, AUC 0.999. It does not fix the LLM's three over-strict refusals.
+  93.5% of cases itself, AUC 0.999. A full served run in `jev` mode had Jev decide 372 of the
+  403 evidence checks (92.3%) with no false refusal or false accept; false refusals went
+  18 → 17 of 410, out-of-scope refusals stayed 90/90, and the remaining over-strict refusals
+  all came from the band handed to the LLM.
 
 ### Tools
 
