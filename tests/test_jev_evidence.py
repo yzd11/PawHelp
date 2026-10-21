@@ -183,3 +183,38 @@ def test_offline_eval_picks_bounds_on_train_and_compares_with_the_llm_on_validat
     assert (gate["llm_false_accepts"], gate["policy_false_accepts"]) == (0, 0)
     assert gate["jev_coverage"] == pytest.approx(2 / 3)
     assert summary["validation"]["passed"] is True
+
+
+async def test_intent_eval_maps_jev_labels_and_picks_the_review_threshold_on_train():
+    from scripts.run_jev_intent_evals import JEV_QUESTION, jev_choice, summarize
+
+    class FakeChoiceJev:
+        async def system_one(self, state, questions, *, model=None, timeout=None):
+            assert json.loads(state) == {"customer_message": "转人工"} and questions[JEV_QUESTION]["type"] == "choice"
+            answer = SimpleNamespace(choice="human_agent", probabilities={"human_agent": 0.9, "complaint": 0.1})
+            return SimpleNamespace(model="jev-1.14.0", choices={JEV_QUESTION: answer}, usage=SimpleNamespace(input_tokens=50))
+
+    jev = await jev_choice(FakeChoiceJev(), "转人工", model="jev-1.14.0", timeout=1)
+    assert jev["top"] == "人工" and jev["probabilities"] == {"人工": 0.9, "投诉": 0.1}
+
+    def case(case_id, split, intents, llm, jev_p):
+        runs = [{"intent": i, "confidence": c, "mismatches": [] if i in intents else ["intent"]} for i, c in llm]
+        probabilities = {i: jev_p.get(i, 0.0) for i in ("物流", "售后", "其他")}
+        return {"id": case_id, "split": split, "intents": intents, "llm": runs,
+                "jev": {"top": max(probabilities, key=probabilities.get), "probabilities": probabilities, "latency_ms": 5}}
+    # The LLM is equally sure when right and wrong; Jev's probability for its pick tells them apart.
+    cases = [case("a", "train", ["物流"], [("物流", 0.9)], {"物流": 0.8}),
+             case("b", "train", ["售后"], [("物流", 0.9)], {"物流": 0.2, "售后": 0.7}),
+             case("c", "train", ["其他"], [("其他", 0.3)], {"其他": 0.9}),
+             case("d", "validation", ["物流"], [("物流", 0.9)], {"物流": 0.85}),
+             case("e", "validation", ["售后"], [("物流", 0.95)], {"物流": 0.1, "售后": 0.8})]
+
+    summary = summarize(cases, model="llm", jev_model="jev-1.14.0", runs_per_case=1)
+
+    rules = summary["validation"]["rules"]
+    assert rules["current"] == {"score": "confidence", "threshold": 0.55, "served_wrong": 1, "clarified_clear": 0}
+    assert rules["jev_tuned"]["threshold"] == 0.8  # flags b, keeps a
+    assert (rules["jev_tuned"]["served_wrong"], rules["jev_tuned"]["clarified_clear"]) == (0, 1)
+    assert summary["validation"]["auc"]["jev_p"]["auc"] == 1.0 and summary["validation"]["auc"]["confidence"]["auc"] == 0.0
+    # Catching the wrong answer cost a clarification on a clear question, so the rule is not strictly better.
+    assert summary["passed"] is False

@@ -77,18 +77,38 @@ def test_chat_cases_are_valid_and_cover_required_scenarios() -> None:
 def test_intent_cases_are_valid_and_their_route_labels_agree_with_the_router() -> None:
     """A label the router cannot reach would make a live run fail for the wrong reason."""
 
+    from scripts.run_intent_evals import load_cases
+
+    cases = load_cases()
+    assert {case["group"] for case in cases} == {"fresh_lookup", "fresh_lookup_negative", "task_kind"}
+    for case in cases:
+        assert set(case) == {"id", "group", "question", "intents", "task_kind", "requested_lookups", "route", "select_order"}
+    _assert_route_labels_agree(cases)
+
+
+def test_jev_intent_cases_agree_with_the_router_and_keep_a_fixed_split() -> None:
+    from scripts.run_intent_evals import load_cases
+    from scripts.run_jev_intent_evals import CASES
+
+    cases = load_cases(CASES)
+    assert len({case["question"] for case in cases}) == len(cases)
+    for case in cases:
+        assert case["label_source"] in {"claude", "user_reviewed"}
+        # Fixed before any model run: every fifth case of each group is validation.
+        assert case["split"] == ("validation" if int(case["id"].rsplit("_", 1)[1]) % 5 == 0 else "train")
+    _assert_route_labels_agree(cases)
+
+
+def _assert_route_labels_agree(cases) -> None:
     from typing import get_args
 
     from app.workflow.understanding import IntentDecision, ResolvedQuestion, plan_route
-    from scripts.run_intent_evals import load_cases, mismatches
+    from scripts.run_intent_evals import mismatches
 
-    cases = load_cases()
     ids = [case["id"] for case in cases]
     assert len(ids) == len(set(ids))
-    assert {case["group"] for case in cases} == {"fresh_lookup", "fresh_lookup_negative", "task_kind"}
     all_kinds = get_args(IntentDecision.model_fields["task_kind"].annotation)
     for case in cases:
-        assert set(case) == {"id", "group", "question", "intents", "task_kind", "requested_lookups", "route", "select_order"}
         # An unlabelled task_kind means the route must hold whichever kind the model picks.
         for intent in case["intents"]:
             for kind in [case["task_kind"]] if case["task_kind"] else all_kinds:

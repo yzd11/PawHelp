@@ -60,6 +60,9 @@
   403 evidence checks (92.3%) with no false refusal or false accept; false refusals went
   18 → 17 of 410, out-of-scope refusals stayed 90/90, and the remaining over-strict refusals
   all came from the band handed to the LLM.
+- Jev was also tried as the intent review signal on 199 new single-turn questions (44 user-reviewed
+  labels, fixed validation split). It tied the current confidence < 0.55 rule on validation and
+  was not adopted: the LLM's wrong intents are confident, so no threshold on either signal catches them.
 
 ### Tools
 
