@@ -38,7 +38,7 @@ from app.topics.api import topic_router
 
 from app.api.pages import CHAT_PAGE_PATH, KNOWLEDGE_PAGE_PATH, RAG_EVAL_PAGE_PATH, page_router
 from app.api.evaluation import (
-    PROJECT_ROOT, RAG_EVAL_CASES_PATH, RAG_EVAL_REPORT_DIR, RAG_EVAL_REPORT_PATH,
+    PROJECT_ROOT, RAG_EVAL_CASES_PATH, RAG_EVAL_REPORT_DIR,
     RagEvalRunner, evaluation_router,
 )
 
@@ -200,7 +200,7 @@ def create_app(
             if owned_engine is not None:
                 await owned_engine.dispose()
 
-    app = FastAPI(title="PawHelp", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="PawHelp", version="1.0.0", lifespan=lifespan)
     app.mount("/static", StaticFiles(directory=CHAT_PAGE_PATH.parent), name="static")
     app.state.settings = active_settings
     app.state.model = active_model

@@ -1,6 +1,5 @@
 """Build an auditable sample pack; never auto-claim human approval."""
 import argparse
-from collections import Counter
 import json
 from pathlib import Path
 import random

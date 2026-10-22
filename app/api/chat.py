@@ -3,10 +3,10 @@
 from collections.abc import AsyncGenerator
 from datetime import timezone
 from random import Random
-from typing import Annotated, Literal
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Header, HTTPException, Query, Response
+from fastapi import APIRouter, Header, HTTPException, Response
 from fastapi.responses import StreamingResponse
 from pydantic import PositiveInt
 from sqlalchemy import select

@@ -1,5 +1,5 @@
 """Evidence signals and reproducible threshold calibration, not probabilities."""
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 import hashlib
 import json
 from pathlib import Path

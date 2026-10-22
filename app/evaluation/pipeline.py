@@ -1,5 +1,4 @@
 """Bounded manual/opt-in evaluation runs and comparable history."""
-import asyncio
 import hashlib
 import json
 import logging

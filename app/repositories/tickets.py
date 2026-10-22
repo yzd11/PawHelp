@@ -1,6 +1,6 @@
 """Idempotent human-support ticket persistence."""
 
-from sqlalchemy import func, select
+from sqlalchemy import func
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 

@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 from app.topics.data import digest, exclusive_run, read_jsonl, write_json
-from app.topics.taxonomy import ID2LABEL, LABEL2ID, TAXONOMY_HASH, TOPIC_NAMES, validate_labels
+from app.topics.taxonomy import ID2LABEL, LABEL2ID, TAXONOMY_HASH, TOPIC_NAMES
 from app.topics.metrics import evaluate, evaluate_sources, labels_from_scores, scan_threshold, sigmoid
 
 BASE_MODEL = "hfl/chinese-roberta-wwm-ext"
