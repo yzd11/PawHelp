@@ -29,6 +29,7 @@ async def test_weak_knowledge_is_logged_and_blocked_before_agent():
     assert model.agent_calls == 0
     assert service.low_confidence == ["retrieval_low_conf"]
     assert "不会猜测" in events[-1].data["content"]
+    assert events[-1].data["suggested_actions"] == ["转人工", "建工单"]
 
 
 async def test_order_then_logistics_requires_two_agent_tool_steps():

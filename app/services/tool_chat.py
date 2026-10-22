@@ -47,6 +47,8 @@ class ToolCallingChatModel(StreamingChatModel, Protocol):
 ToolBuilder = Callable[[ToolRuntime], list[BaseTool]]
 _CITATION_PATTERN = re.compile(r"\[(\d+)]")
 _KNOWLEDGE_REFUSAL = "抱歉，当前知识库没有足够证据回答这个问题，我不会猜测。"
+# A refusal should not be a dead end: offer the human handoff buttons with it.
+_KNOWLEDGE_REFUSAL_ACTIONS = ("转人工", "建工单")
 
 
 def _raw_tool_arguments_are_strict(aggregate: AIMessageChunk) -> bool:

@@ -63,9 +63,13 @@
 - Jev was also tried as the intent review signal on 199 new single-turn questions (44 user-reviewed
   labels, fixed validation split). It tied the current confidence < 0.55 rule on validation and
   was not adopted: the LLM's wrong intents are confident, so no threshold on either signal catches them.
-- The intent prompt counts account login and security, points and coupons, and shop and company
+- The intent prompt counts account login and password rules, points and coupons, and shop and company
   information as 商品咨询. Questions such as "怎么改登录密码" were classed 其他 with high
   confidence and the customer was asked to clarify instead of getting the account-security answer.
+- Account-security incidents (a stolen account, unusual logins, a frozen account) are classed 人工,
+  because they need a person to verify identity and freeze the account; questions about how to change
+  a password or rebind a phone stay 商品咨询.
+- A knowledge refusal offers the 转人工 and 建工单 buttons instead of ending the conversation.
 
 ### Tools
 

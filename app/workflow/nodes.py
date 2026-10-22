@@ -15,7 +15,7 @@ from app.context import ContextBudgetExceeded
 from app.knowledge.search import RetrievalStrategy
 from app.observability import record_intent
 from app.repositories.orders import OrderNotFound
-from app.services.tool_chat import PreparedTurn, _KNOWLEDGE_REFUSAL
+from app.services.tool_chat import PreparedTurn, _KNOWLEDGE_REFUSAL, _KNOWLEDGE_REFUSAL_ACTIONS
 from app.tools.executor import ToolExecutor
 from app.tools.registry import ToolRegistry
 from app.workflow.understanding import (
@@ -242,7 +242,7 @@ class TurnNodes:
             self.turn, source="retrieval_low_conf", reason=json.dumps(state.get("evidence_confidence", {}), ensure_ascii=False),
             retrieved_chunks=state.get("retrieved_chunks"),
         )
-        return {"answer": _KNOWLEDGE_REFUSAL, "sources": []}
+        return {"answer": _KNOWLEDGE_REFUSAL, "sources": [], "actions": list(_KNOWLEDGE_REFUSAL_ACTIONS)}
 
     async def complaint(self, state) -> dict[str, object]:
         logger.info("workflow node=complaint conversation=%s", self.turn.conversation_id)

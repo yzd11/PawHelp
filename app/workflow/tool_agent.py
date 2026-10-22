@@ -15,7 +15,7 @@ from app.chat import text_from_chunk
 from app.tools.business import build_business_tools
 from app.tools.executor import ToolExecutor
 from app.tools.registry import ToolRegistry, UnknownToolError
-from app.services.tool_chat import _KNOWLEDGE_REFUSAL
+from app.services.tool_chat import _KNOWLEDGE_REFUSAL, _KNOWLEDGE_REFUSAL_ACTIONS
 
 logger = logging.getLogger(__name__)
 _ACTION_LINE = re.compile(r"\n?\[建议选项:(转人工|建工单)(?:,(转人工|建工单))?\]\s*$")
@@ -122,13 +122,13 @@ class ToolAgentNodes:
             insufficient = re.search(r"\[证据不足:([^\]]+)\]", answer)
             if knowledge and insufficient:
                 await self.service._record_low_confidence(self.turn, source="self_check", reason=insufficient.group(1)[:500], retrieved_chunks=state.get("retrieved_chunks"))
-                answer, sources, actions = _KNOWLEDGE_REFUSAL, [], []
+                answer, sources, actions = _KNOWLEDGE_REFUSAL, [], list(_KNOWLEDGE_REFUSAL_ACTIONS)
             if recalling:
                 actions = []
             if missing: answer, actions = _FRESH_QUERY_REPLY, ["转人工"]
             if knowledge and not self.service._citations_are_valid(answer, sources):
                 await self.service._record_low_confidence(self.turn, source="self_check", reason="最终知识答复缺少合法引用或出现越界引用", retrieved_chunks=state.get("retrieved_chunks"))
-                answer, sources = _KNOWLEDGE_REFUSAL, []
+                answer, sources, actions = _KNOWLEDGE_REFUSAL, [], list(_KNOWLEDGE_REFUSAL_ACTIONS)
             if state["intent"] == "退款退货" and state.get("refund_available") and sources: actions.append("申请退款")
             return self._final(answer or "请补充一下您的具体问题。", actions, sources, writer)
         seen = {item["call_id"] for item in state.get("trace", [])}

@@ -91,9 +91,9 @@ reference_status 只能为 clear（本身清楚）、resolved（历史唯一消�
 
 INTENT_PROMPT = """你只判断用户现在要做什么，不回答业务问题。只输出 JSON：intent、confidence、task_kind、requested_lookups、clarification_question。
 intent 只能是：物流、订单、商品咨询、退款退货、售后、投诉、人工、会话回顾、闲聊、其他。
-物流=包裹运输位置/进度；订单=下单、订单状态或订单修改；商品咨询=商品及平台规则咨询，含参数、价格、用法、清洗、安全、回收、发票、积分优惠券、账户登录与账号安全、店铺与公司信息和服务说明；
+物流=包裹运输位置/进度；订单=下单、订单状态或订单修改；商品咨询=商品及平台规则咨询，含参数、价格、用法、清洗、安全、回收、发票、积分优惠券、账户登录改密与改绑规则、店铺与公司信息和服务说明；
 退款退货=申请退款、退货或退货政策；售后=维修、换货、破损、保修等；投诉=明确表达投诉或服务不满；
-人工=明确要求建工单、转人工、人工客服跟进，优先于投诉；上一轮客服追问建单信息、本轮补充描述也归人工。
+人工=明确要求建工单、转人工、人工客服跟进，优先于投诉；上一轮客服追问建单信息、本轮补充描述也归人工；账号被盗、异常登录、账号被冻结等账户安全事件需要人工核验身份，也归人工（只问改密码、改绑的操作规则仍归商品咨询）。
 会话回顾=询问当前会话此前说过/查过/提过的订单、商品、诉求或处理结果，只要回顾历史而非查询最新业务数据。
 “之前查的是哪个订单”不是闲聊，也不是其他。若要求重新/现在查询物流、订单、退款等，仍按对应业务意图分流，不归会话回顾。
 闲聊=问候等可以固定回应的社交表达；其他=确实不属于这些业务，或缺少上下文无法判断要做什么。
@@ -114,6 +114,7 @@ confidence 是 0 到 1 的自报把握，不是已校准概率。拿不准可以
 “帮我建个工单” → {"intent":"人工","confidence":0.98,"task_kind":"unspecified","clarification_question":""}
 “我要投诉，请建工单跟进饮水机漏水” → {"intent":"人工","confidence":0.98,"task_kind":"unspecified","clarification_question":""}
 “转人工，不要建工单” → {"intent":"人工","confidence":0.98,"task_kind":"unspecified","clarification_question":""}
+“我的账号好像被别人登录了” → {"intent":"人工","confidence":0.93,"task_kind":"unspecified","clarification_question":""}
 “工单是什么” → {"intent":"商品咨询","confidence":0.85,"task_kind":"general_information","clarification_question":""}
 “查订单1001退货处理进度” → {"intent":"售后","confidence":0.97,"task_kind":"progress_query","clarification_question":""}
 “这个能退吗” → {"intent":"退款退货","confidence":0.95,"task_kind":"order_specific","clarification_question":""}

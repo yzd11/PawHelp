@@ -246,6 +246,7 @@ async def test_generation_insufficiency_marker_is_not_shown_and_enters_pool():
     assert events[-1].name == "done"
     assert "证据不足:" not in events[-1].data["content"]
     assert "self_check" in service.low_confidence
+    assert events[-1].data["suggested_actions"] == ["转人工", "建工单"]
 
 
 @pytest.mark.parametrize("source", ["retrieval_low_conf", "self_check"])
